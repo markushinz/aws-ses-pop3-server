@@ -65,10 +65,9 @@ func initProviderCreator() provider.ProviderCreator {
 			viper.GetString("aws-s3-bucket"),
 			viper.GetString("aws-s3-prefix"),
 		)
-	} else {
-		log.Print("Warning: No aws-access-key-id / aws-secret-access-key specified. NoneProviderCreator will be used")
-		return provider.NewNoneProviderCreator()
 	}
+	log.Print("Warning: No aws-access-key-id / aws-secret-access-key specified. NoneProviderCreator will be used")
+	return provider.NewNoneProviderCreator()
 }
 
 func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {
@@ -90,7 +89,6 @@ func initHandlerCreator(providerCreator provider.ProviderCreator) handler.Handle
 }
 
 func initServerCreator(handlerCreator handler.HandlerCreator) server.ServerCreator {
-	viper.SetDefault("host", "localhost")
 	var certificate tls.Certificate
 	var err error
 	if viper.IsSet("tls-cert") && viper.IsSet("tls-key") {
