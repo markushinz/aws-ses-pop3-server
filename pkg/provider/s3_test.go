@@ -162,6 +162,56 @@ func TestListEmails(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "cache",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+							{
+								key:  "shouldNotBeLoaded",
+								size: 0000,
+							},
+						},
+					},
+					cache: &awsS3Cache{
+						emails: map[int]*email{
+							1: {
+								ID:   "abc123",
+								Size: 1000,
+							},
+							2: {
+								ID:   "def456",
+								Size: 2000,
+							},
+							3: {
+								ID:   "ghi789",
+								Size: 3000,
+							},
+						},
+					},
+				},
+				notNumbers: []int{2},
+			},
+			want: map[int]*email{
+				1: {
+					ID:   "abc123",
+					Size: 1000,
+				},
+				3: {
+					ID:   "ghi789",
+					Size: 3000,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
