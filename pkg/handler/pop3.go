@@ -328,7 +328,7 @@ func (handler *pop3Handler) handleDELE(message string) (responses []string) {
 func (handler *pop3Handler) handleQUIT() (responses []string) {
 	handler.state = "UPDATE"
 	for _, number := range handler.cache.dele {
-		err := handler.provider.DeleteEmail(number, handler.cache.dele)
+		err := handler.provider.DeleteEmail(number)
 		if err != nil {
 			log.Printf("Error handleQUIT(): %v", err)
 			return []string{"-ERR"}

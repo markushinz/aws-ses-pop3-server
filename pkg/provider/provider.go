@@ -27,7 +27,7 @@ type Provider interface {
 	ListEmails(notNumbers []int) (emails map[int]*Email, err error)
 	GetEmail(number int, notNumbers []int) (email *Email, err error)
 	GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error)
-	DeleteEmail(number int, notNumbers []int) (err error)
+	DeleteEmail(number int) (err error)
 }
 
 type EmailPayload []byte

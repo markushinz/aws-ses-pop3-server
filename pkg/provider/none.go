@@ -45,6 +45,6 @@ func (provider *noneProvider) GetEmailPayload(number int, notNumbers []int) (pay
 	return nil, fmt.Errorf("%v does not exist", number)
 }
 
-func (provider *noneProvider) DeleteEmail(number int, notNumbers []int) (err error) {
+func (provider *noneProvider) DeleteEmail(number int) (err error) {
 	return fmt.Errorf("%v does not exist", number)
 }

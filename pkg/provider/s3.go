@@ -143,8 +143,8 @@ func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (pa
 	return *email.payloadOptional, nil
 }
 
-func (provider *awsS3Provider) DeleteEmail(number int, notNumbers []int) (err error) {
-	email, err := provider.GetEmail(number, notNumbers)
+func (provider *awsS3Provider) DeleteEmail(number int) (err error) {
+	email, err := provider.GetEmail(number, nil)
 	if err != nil {
 		return err
 	}

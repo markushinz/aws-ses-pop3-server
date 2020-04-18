@@ -647,9 +647,8 @@ func TestGetEmaiPayloadl(t *testing.T) {
 
 func TestDeleteEmail(t *testing.T) {
 	type args struct {
-		provider   awsS3Provider
-		number     int
-		notNumbers []int
+		provider awsS3Provider
+		number   int
 	}
 	tests := []struct {
 		name    string
@@ -674,24 +673,6 @@ func TestDeleteEmail(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "emails excluded",
-			args: args{
-				provider: awsS3Provider{
-					client: mockClient{
-						items: []mockItem{
-							{
-								key:  "abc123",
-								size: 1000,
-							},
-						},
-					},
-				},
-				number:     2,
-				notNumbers: []int{-8, 2},
-			},
-			wantErr: true,
-		},
-		{
 			name: "delete",
 			args: args{
 				provider: awsS3Provider{
@@ -704,8 +685,7 @@ func TestDeleteEmail(t *testing.T) {
 						},
 					},
 				},
-				number:     1,
-				notNumbers: []int{-8, 2},
+				number: 1,
 			},
 		},
 		{
@@ -733,8 +713,7 @@ func TestDeleteEmail(t *testing.T) {
 						},
 					},
 				},
-				number:     2,
-				notNumbers: []int{-8, 1},
+				number: 2,
 			},
 		},
 		{
@@ -751,15 +730,14 @@ func TestDeleteEmail(t *testing.T) {
 						deleteErr: fmt.Errorf("this should fail"),
 					},
 				},
-				number:     1,
-				notNumbers: []int{-8, 2},
+				number: 1,
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.args.provider.DeleteEmail(tt.args.number, tt.args.notNumbers)
+			err := tt.args.provider.DeleteEmail(tt.args.number)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 		})
 	}

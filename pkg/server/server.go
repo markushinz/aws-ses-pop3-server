@@ -33,7 +33,7 @@ type Server interface {
 }
 
 func acceptConnections(handlerCreator handler.HandlerCreator, listener net.Listener) {
-	log.Printf("Listening on %v", listener.Addr().String())
+	log.Printf("Info: Listening on %v", listener.Addr().String())
 	for {
 		connection, err := listener.Accept()
 		if err != nil {
@@ -45,7 +45,7 @@ func acceptConnections(handlerCreator handler.HandlerCreator, listener net.Liste
 }
 
 func handleConnection(handlerCreator handler.HandlerCreator, connection net.Conn) {
-	log.Printf("%v connected", connection.RemoteAddr().String())
+	log.Printf("Info: %v connected", connection.RemoteAddr().String())
 	handler, response, err := handlerCreator()
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Fatal error: handleConnection(): %v", err))
@@ -70,7 +70,7 @@ func handleConnection(handlerCreator handler.HandlerCreator, connection net.Conn
 }
 
 func closeConnection(handler handler.Handler, connection net.Conn) {
-	log.Printf("%v disconnected", connection.RemoteAddr().String())
+	log.Printf("Info: %v disconnected", connection.RemoteAddr().String())
 	connection.Close()
 	handler.CloseConnection()
 }
