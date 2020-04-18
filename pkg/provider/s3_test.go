@@ -126,7 +126,7 @@ func TestInitCache(t *testing.T) {
 					client: mockClient{
 						items: []mockItem{
 							{
-								key:  "should be loaded the only item as cache is overwritten",
+								key:  "should be loaded as the only item as cache is overwritten",
 								size: 0000,
 							},
 						},
@@ -147,7 +147,7 @@ func TestInitCache(t *testing.T) {
 			},
 			want: map[int]*email{
 				1: {
-					ID:   "should be loaded the only item as cache is overwritten",
+					ID:   "should be loaded as the only item as cache is overwritten",
 					Size: 0000,
 				},
 			},
@@ -453,6 +453,181 @@ func TestGetEmail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.args.provider.GetEmail(tt.args.number, tt.args.notNumbers)
+			assert.EqualValues(t, tt.wantErr, err != nil)
+			if !tt.wantErr {
+				assert.EqualValues(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestGetEmaiPayloadl(t *testing.T) {
+	type args struct {
+		provider   awsS3Provider
+		number     int
+		notNumbers []int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    emailPayload
+		wantErr bool
+	}{
+		{
+			name: "emails out of range",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+					downloader: mockDownloader{
+						mockItem: mockItem{
+							bytes: []byte("Hello World!"),
+						},
+					},
+				},
+				number: 7,
+			},
+			wantErr: true,
+		},
+		{
+			name: "emails excluded",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+					downloader: mockDownloader{
+						mockItem: mockItem{
+							bytes: []byte("Hello World!"),
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 2},
+			},
+			wantErr: true,
+		},
+		{
+			name: "download",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+					downloader: mockDownloader{
+						mockItem: mockItem{
+							bytes: []byte("Hello World!"),
+						},
+					},
+				},
+				number:     1,
+				notNumbers: []int{-8, 2},
+			},
+			want: []byte("Hello World!"),
+		},
+		{
+			name: "cache payload not loaded",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+						},
+					},
+					downloader: mockDownloader{
+						mockItem: mockItem{
+							bytes: []byte("Goodbye World!"),
+						},
+					},
+					cache: &awsS3Cache{
+						emails: map[int]*email{
+							1: {
+								ID:   "abc123",
+								Size: 1000,
+							},
+							2: {
+								ID:   "def456",
+								Size: 2000,
+							},
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 9},
+			},
+			want: []byte("Goodbye World!"),
+		},
+		{
+			name: "cache payload loaded",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+						},
+					},
+					downloader: mockDownloader{
+						mockItem: mockItem{
+							bytes: []byte("Moin World!"),
+						},
+					},
+					cache: &awsS3Cache{
+						emails: map[int]*email{
+							1: {
+								ID:   "abc123",
+								Size: 1000,
+							},
+							2: {
+								ID:   "def456",
+								Size: 2000,
+								payloadOptional: func() *emailPayload {
+									var greeting emailPayload
+									greeting = []byte("Servus World!")
+									return &greeting
+								}(),
+							},
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 9},
+			},
+			want: []byte("Servus World!"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.args.provider.GetEmailPayload(tt.args.number, tt.args.notNumbers)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
 				assert.EqualValues(t, tt.want, got)
