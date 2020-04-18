@@ -17,6 +17,7 @@
 package provider
 
 import (
+	"fmt"
 	"io"
 	"testing"
 
@@ -151,16 +152,29 @@ func TestInitCache(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "error",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						err: fmt.Errorf("this should fail"),
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.args.provider.initCache()
-			got := tt.args.provider.cache.emails
 			assert.EqualValues(t, tt.wantErr, err != nil)
-			assert.EqualValues(t, len(tt.want), len(got))
-			for id, email := range got {
-				assert.Contains(t, tt.want, id)
-				assert.EqualValues(t, tt.want[id], email)
+			if !tt.wantErr {
+				got := tt.args.provider.cache.emails
+				assert.EqualValues(t, len(tt.want), len(got))
+				for id, email := range got {
+					assert.Contains(t, tt.want, id)
+					assert.EqualValues(t, tt.want[id], email)
+				}
 			}
 		})
 	}
@@ -307,15 +321,90 @@ func TestListEmails(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "error",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						err: fmt.Errorf("this should fail"),
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.args.provider.ListEmails(tt.args.notNumbers)
 			assert.EqualValues(t, tt.wantErr, err != nil)
-			assert.EqualValues(t, len(tt.want), len(got))
-			for id, email := range got {
-				assert.Contains(t, tt.want, id)
-				assert.EqualValues(t, tt.want[id], email)
+			if !tt.wantErr {
+				assert.EqualValues(t, len(tt.want), len(got))
+				for id, email := range got {
+					assert.Contains(t, tt.want, id)
+					assert.EqualValues(t, tt.want[id], email)
+				}
+			}
+		})
+	}
+}
+
+func TestGetEmail(t *testing.T) {
+	type args struct {
+		provider   awsS3Provider
+		number     int
+		notNumbers []int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *email
+		wantErr bool
+	}{
+		{
+			name: "no emails",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{},
+				},
+				number: 1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "emails",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+							{
+								key:  "ghi789",
+								size: 3000,
+							},
+						},
+					},
+				},
+				number: 1,
+			},
+			want: &email{
+				ID:   "abc123",
+				Size: 1000,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.args.provider.GetEmail(tt.args.number, tt.args.notNumbers)
+			assert.EqualValues(t, tt.wantErr, err != nil)
+			if !tt.wantErr {
+				assert.EqualValues(t, tt.want, got)
 			}
 		})
 	}
