@@ -398,6 +398,57 @@ func TestGetEmail(t *testing.T) {
 				Size: 1000,
 			},
 		},
+		{
+			name: "emails out of range",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+							{
+								key:  "ghi789",
+								size: 3000,
+							},
+						},
+					},
+				},
+				number: 7,
+			},
+			wantErr: true,
+		},
+		{
+			name: "emails excluded",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+							{
+								key:  "ghi789",
+								size: 3000,
+							},
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 2},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

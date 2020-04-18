@@ -110,13 +110,11 @@ func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*ema
 }
 
 func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *email, err error) {
-	if provider.cache == nil {
-		err := provider.initCache()
-		if err != nil {
-			return nil, err
-		}
+	emails, err := provider.ListEmails(notNumbers)
+	if err != nil {
+		return nil, err
 	}
-	if email, exists := provider.cache.emails[number]; exists {
+	if email, exists := emails[number]; exists {
 		return email, nil
 	}
 	return nil, fmt.Errorf("%v does not exist", number)
