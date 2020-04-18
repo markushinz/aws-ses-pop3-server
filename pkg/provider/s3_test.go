@@ -568,7 +568,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 					},
 					downloader: mockDownloader{
 						mockItem: mockItem{
-							bytes: []byte("Goodbye World!"),
+							bytes: []byte("Hello World!"),
 						},
 					},
 					cache: &awsS3Cache{
@@ -587,7 +587,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 				number:     2,
 				notNumbers: []int{-8, 9},
 			},
-			want: []byte("Goodbye World!"),
+			want: []byte("Hello World!"),
 		},
 		{
 			name: "cache payload loaded",
@@ -607,7 +607,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 					},
 					downloader: mockDownloader{
 						mockItem: mockItem{
-							bytes: []byte("Moin World!"),
+							bytes: []byte("This message should not be loaded as the message is already cached"),
 						},
 					},
 					cache: &awsS3Cache{
@@ -621,7 +621,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 								Size: 2000,
 								payloadOptional: func() *emailPayload {
 									var greeting emailPayload
-									greeting = []byte("Servus World!")
+									greeting = []byte("This is the message that should be loaded")
 									return &greeting
 								}(),
 							},
@@ -631,7 +631,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 				number:     2,
 				notNumbers: []int{-8, 9},
 			},
-			want: []byte("Servus World!"),
+			want: []byte("This is the message that should be loaded"),
 		},
 	}
 	for _, tt := range tests {
