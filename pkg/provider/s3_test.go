@@ -63,6 +63,109 @@ func (mock mockDownloader) Download(writer io.WriterAt, input *s3.GetObjectInput
 	return int64(len(mock.mockItem.bytes)), mock.err
 }
 
+func TestInitCache(t *testing.T) {
+	type args struct {
+		provider awsS3Provider
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[int]*email
+		wantErr bool
+	}{
+		{
+			name: "no emails",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{},
+				},
+			},
+		},
+		{
+			name: "emails",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+							{
+								key:  "def456",
+								size: 2000,
+							},
+							{
+								key:  "ghi789",
+								size: 3000,
+							},
+						},
+					},
+				},
+			},
+			want: map[int]*email{
+				1: {
+					ID:   "abc123",
+					Size: 1000,
+				},
+				2: {
+					ID:   "def456",
+					Size: 2000,
+				},
+				3: {
+					ID:   "ghi789",
+					Size: 3000,
+				},
+			},
+		},
+		{
+			name: "overwrite cache",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "should be loaded the only item as cache is overwritten",
+								size: 0000,
+							},
+						},
+					},
+					cache: &awsS3Cache{
+						emails: map[int]*email{
+							1: {
+								ID:   "abc123",
+								Size: 1000,
+							},
+							2: {
+								ID:   "def456",
+								Size: 2000,
+							},
+						},
+					},
+				},
+			},
+			want: map[int]*email{
+				1: {
+					ID:   "should be loaded the only item as cache is overwritten",
+					Size: 0000,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.args.provider.initCache()
+			got := tt.args.provider.cache.emails
+			assert.EqualValues(t, tt.wantErr, err != nil)
+			assert.EqualValues(t, len(tt.want), len(got))
+			for id, email := range got {
+				assert.Contains(t, tt.want, id)
+				assert.EqualValues(t, tt.want[id], email)
+			}
+		})
+	}
+}
+
 func TestListEmails(t *testing.T) {
 	type args struct {
 		provider   awsS3Provider
