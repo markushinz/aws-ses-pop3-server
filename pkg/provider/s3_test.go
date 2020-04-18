@@ -36,8 +36,9 @@ type mockItem struct {
 
 type mockClient struct {
 	s3iface.S3API
-	items []mockItem
-	err   error
+	items     []mockItem
+	listErr   error
+	deleteErr error
 }
 
 func (mock mockClient) ListObjectsV2(input *s3.ListObjectsV2Input) (output *s3.ListObjectsV2Output, err error) {
@@ -50,7 +51,15 @@ func (mock mockClient) ListObjectsV2(input *s3.ListObjectsV2Input) (output *s3.L
 			Size: &size,
 		})
 	}
-	return &s3.ListObjectsV2Output{Contents: contents}, mock.err
+	return &s3.ListObjectsV2Output{Contents: contents}, mock.listErr
+}
+
+func (mock mockClient) DeleteObject(*s3.DeleteObjectInput) (input *s3.DeleteObjectOutput, err error) {
+	return &s3.DeleteObjectOutput{}, mock.deleteErr
+}
+
+func (mock mockClient) WaitUntilObjectNotExists(input *s3.HeadObjectInput) error {
+	return mock.deleteErr
 }
 
 type mockDownloader struct {
@@ -157,7 +166,7 @@ func TestInitCache(t *testing.T) {
 			args: args{
 				provider: awsS3Provider{
 					client: mockClient{
-						err: fmt.Errorf("this should fail"),
+						listErr: fmt.Errorf("this should fail"),
 					},
 				},
 			},
@@ -326,7 +335,7 @@ func TestListEmails(t *testing.T) {
 			args: args{
 				provider: awsS3Provider{
 					client: mockClient{
-						err: fmt.Errorf("this should fail"),
+						listErr: fmt.Errorf("this should fail"),
 					},
 				},
 			},
@@ -632,6 +641,126 @@ func TestGetEmaiPayloadl(t *testing.T) {
 			if !tt.wantErr {
 				assert.EqualValues(t, tt.want, got)
 			}
+		})
+	}
+}
+
+func TestDeleteEmail(t *testing.T) {
+	type args struct {
+		provider   awsS3Provider
+		number     int
+		notNumbers []int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "emails out of range",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+				},
+				number: 7,
+			},
+			wantErr: true,
+		},
+		{
+			name: "emails excluded",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 2},
+			},
+			wantErr: true,
+		},
+		{
+			name: "delete",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+				},
+				number:     1,
+				notNumbers: []int{-8, 2},
+			},
+		},
+		{
+			name: "delete cache",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+					},
+					cache: &awsS3Cache{
+						emails: map[int]*email{
+							1: {
+								ID:   "abc123",
+								Size: 1000,
+							},
+							2: {
+								ID:   "def456",
+								Size: 2000,
+							},
+						},
+					},
+				},
+				number:     2,
+				notNumbers: []int{-8, 1},
+			},
+		},
+		{
+			name: "delete error",
+			args: args{
+				provider: awsS3Provider{
+					client: mockClient{
+						items: []mockItem{
+							{
+								key:  "abc123",
+								size: 1000,
+							},
+						},
+						deleteErr: fmt.Errorf("this should fail"),
+					},
+				},
+				number:     1,
+				notNumbers: []int{-8, 2},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.args.provider.DeleteEmail(tt.args.number, tt.args.notNumbers)
+			assert.EqualValues(t, tt.wantErr, err != nil)
 		})
 	}
 }
