@@ -33,7 +33,6 @@ type Provider interface {
 type emailPayload []byte
 
 type email struct {
-	Number          int
 	ID              string
 	Size            int64
 	payloadOptional *emailPayload
