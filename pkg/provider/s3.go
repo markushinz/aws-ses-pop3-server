@@ -29,7 +29,7 @@ import (
 )
 
 type awsS3Cache struct {
-	emails map[int]*email
+	emails map[int]*Email
 }
 
 type awsS3Provider struct {
@@ -75,10 +75,10 @@ func (provider *awsS3Provider) initCache() (err error) {
 		return err
 	}
 	provider.cache = &awsS3Cache{
-		emails: make(map[int]*email),
+		emails: make(map[int]*Email),
 	}
 	for index, item := range res.Contents {
-		provider.cache.emails[index+1] = &email{
+		provider.cache.emails[index+1] = &Email{
 			ID:   strings.TrimPrefix(*item.Key, provider.prefix),
 			Size: *item.Size,
 		}
@@ -86,14 +86,14 @@ func (provider *awsS3Provider) initCache() (err error) {
 	return nil
 }
 
-func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*email, err error) {
+func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*Email, err error) {
 	if provider.cache == nil {
 		err := provider.initCache()
 		if err != nil {
 			return nil, err
 		}
 	}
-	emails = make(map[int]*email)
+	emails = make(map[int]*Email)
 	for number, email := range provider.cache.emails {
 		skip := false
 		for _, notNumnber := range notNumbers {
@@ -109,7 +109,7 @@ func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*ema
 	return emails, nil
 }
 
-func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *email, err error) {
+func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *Email, err error) {
 	emails, err := provider.ListEmails(notNumbers)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *em
 	return nil, fmt.Errorf("%v does not exist", number)
 }
 
-func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (payload emailPayload, err error) {
+func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error) {
 	email, err := provider.GetEmail(number, notNumbers)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (pa
 		if err != nil {
 			return nil, err
 		}
-		var payload emailPayload
+		var payload EmailPayload
 		payload = buf.Bytes()
 		email.payloadOptional = &payload
 	}

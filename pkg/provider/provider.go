@@ -24,29 +24,29 @@ import (
 type ProviderCreator func() (Provider, error)
 
 type Provider interface {
-	ListEmails(notNumbers []int) (emails map[int]*email, err error)
-	GetEmail(number int, notNumbers []int) (email *email, err error)
-	GetEmailPayload(number int, notNumbers []int) (payload emailPayload, err error)
+	ListEmails(notNumbers []int) (emails map[int]*Email, err error)
+	GetEmail(number int, notNumbers []int) (email *Email, err error)
+	GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error)
 	DeleteEmail(number int, notNumbers []int) (err error)
 }
 
-type emailPayload []byte
+type EmailPayload []byte
 
-type email struct {
+type Email struct {
 	ID              string
 	Size            int64
-	payloadOptional *emailPayload
+	payloadOptional *EmailPayload
 }
 
-func (payload emailPayload) ParseAll() (lines []string, err error) {
+func (payload EmailPayload) ParseAll() (lines []string, err error) {
 	return parse(payload, true, 0)
 }
 
-func (payload emailPayload) ParseHeaders(x int) (lines []string, err error) {
+func (payload EmailPayload) ParseHeaders(x int) (lines []string, err error) {
 	return parse(payload, false, x)
 }
 
-func parse(payload emailPayload, all bool, x int) (lines []string, err error) {
+func parse(payload EmailPayload, all bool, x int) (lines []string, err error) {
 	reader := bytes.NewReader(payload)
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {

@@ -80,7 +80,7 @@ func TestInitCache(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    map[int]*email
+		want    map[int]*Email
 		wantErr bool
 	}{
 		{
@@ -113,7 +113,7 @@ func TestInitCache(t *testing.T) {
 					},
 				},
 			},
-			want: map[int]*email{
+			want: map[int]*Email{
 				1: {
 					ID:   "abc123",
 					Size: 1000,
@@ -141,7 +141,7 @@ func TestInitCache(t *testing.T) {
 						},
 					},
 					cache: &awsS3Cache{
-						emails: map[int]*email{
+						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
 								Size: 1000,
@@ -154,7 +154,7 @@ func TestInitCache(t *testing.T) {
 					},
 				},
 			},
-			want: map[int]*email{
+			want: map[int]*Email{
 				1: {
 					ID:   "should be loaded as the only item as cache is overwritten",
 					Size: 0000,
@@ -197,7 +197,7 @@ func TestListEmails(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    map[int]*email
+		want    map[int]*Email
 		wantErr bool
 	}{
 		{
@@ -239,7 +239,7 @@ func TestListEmails(t *testing.T) {
 					},
 				},
 			},
-			want: map[int]*email{
+			want: map[int]*Email{
 				1: {
 					ID:   "abc123",
 					Size: 1000,
@@ -277,7 +277,7 @@ func TestListEmails(t *testing.T) {
 				},
 				notNumbers: []int{-10, 2, 7},
 			},
-			want: map[int]*email{
+			want: map[int]*Email{
 				1: {
 					ID:   "abc123",
 					Size: 1000,
@@ -301,7 +301,7 @@ func TestListEmails(t *testing.T) {
 						},
 					},
 					cache: &awsS3Cache{
-						emails: map[int]*email{
+						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
 								Size: 1000,
@@ -319,7 +319,7 @@ func TestListEmails(t *testing.T) {
 				},
 				notNumbers: []int{2},
 			},
-			want: map[int]*email{
+			want: map[int]*Email{
 				1: {
 					ID:   "abc123",
 					Size: 1000,
@@ -366,7 +366,7 @@ func TestGetEmail(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *email
+		want    *Email
 		wantErr bool
 	}{
 		{
@@ -402,7 +402,7 @@ func TestGetEmail(t *testing.T) {
 				},
 				number: 1,
 			},
-			want: &email{
+			want: &Email{
 				ID:   "abc123",
 				Size: 1000,
 			},
@@ -479,7 +479,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    emailPayload
+		want    EmailPayload
 		wantErr bool
 	}{
 		{
@@ -572,7 +572,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 						},
 					},
 					cache: &awsS3Cache{
-						emails: map[int]*email{
+						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
 								Size: 1000,
@@ -611,7 +611,7 @@ func TestGetEmaiPayloadl(t *testing.T) {
 						},
 					},
 					cache: &awsS3Cache{
-						emails: map[int]*email{
+						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
 								Size: 1000,
@@ -619,8 +619,8 @@ func TestGetEmaiPayloadl(t *testing.T) {
 							2: {
 								ID:   "def456",
 								Size: 2000,
-								payloadOptional: func() *emailPayload {
-									var greeting emailPayload
+								payloadOptional: func() *EmailPayload {
+									var greeting EmailPayload
 									greeting = []byte("This is the message that should be loaded")
 									return &greeting
 								}(),
@@ -721,7 +721,7 @@ func TestDeleteEmail(t *testing.T) {
 						},
 					},
 					cache: &awsS3Cache{
-						emails: map[int]*email{
+						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
 								Size: 1000,
