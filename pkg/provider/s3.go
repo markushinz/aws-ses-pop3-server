@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -40,14 +41,14 @@ type awsS3Provider struct {
 	cache      *awsS3Cache
 }
 
-func NewAWSS3ProviderCreator(region, bucket, prefix string) func() (Provider, error) {
+func NewAWSS3ProviderCreator(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix string) func() (Provider, error) {
 	return func() (Provider, error) {
-		return newAWSS3Provider(region, bucket, prefix)
+		return newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix)
 	}
 }
 
-func newAWSS3Provider(region, bucket, prefix string) (provider *awsS3Provider, err error) {
-	client, downloader, err := initClientAndDownloader(region)
+func newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix string) (provider *awsS3Provider, err error) {
+	client, downloader, err := initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region)
 	if err != nil {
 		return nil, err
 	}
@@ -59,10 +60,11 @@ func newAWSS3Provider(region, bucket, prefix string) (provider *awsS3Provider, e
 	}, nil
 }
 
-func initClientAndDownloader(region string) (client *s3.S3, downloader *s3manager.Downloader, err error) {
+func initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region string) (client *s3.S3, downloader *s3manager.Downloader, err error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region)},
-	)
+		Region:      aws.String(region),
+		Credentials: credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, ""),
+	})
 	if err != nil {
 		return nil, nil, err
 	}

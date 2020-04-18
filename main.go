@@ -32,11 +32,17 @@ func main() {
 	loadConfig()
 
 	var providerCreator provider.ProviderCreator
-	providerCreator = provider.NewAWSS3ProviderCreator(
-		viper.GetString("aws-s3-region"),
-		viper.GetString("aws-s3-bucket"),
-		viper.GetString("aws-s3-prefix"),
-	)
+	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
+		providerCreator = provider.NewAWSS3ProviderCreator(
+			viper.GetString("aws-access-key-id"),
+			viper.GetString("aws-secret-access-key"),
+			viper.GetString("aws-s3-region"),
+			viper.GetString("aws-s3-bucket"),
+			viper.GetString("aws-s3-prefix"),
+		)
+	} else {
+		providerCreator = provider.NewNoneProviderCreator()
+	}
 
 	var handlerCreator handler.HandlerCreator
 	handlerCreator = handler.NewPOP3HandlerCreator(
@@ -68,7 +74,6 @@ func loadConfig() {
 	viper.SetEnvPrefix("POP3")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("/etc/aws-ses-pop3-server/")
@@ -79,9 +84,11 @@ func loadConfig() {
 			log.Fatal(fmt.Sprintf("Fatal error loadConfig(): %v", err))
 		}
 	}
-
 	viper.SetDefault("host", "localhost")
 	viper.SetDefault("tls", false)
+	if !viper.GetBool("tls") {
+		log.Print("Warning: TLS is disabled")
+	}
 	viper.SetDefault("port", func() int {
 		if viper.GetBool("tls") {
 			return 995
@@ -91,13 +98,19 @@ func loadConfig() {
 	viper.SetDefault("verbose", false)
 	viper.SetDefault("user", "user")
 	viper.SetDefault("password", "changeit")
-	viper.SetDefault("aws-s3-prefix", "")
-
-	if !viper.IsSet("aws-s3-region") {
-		log.Fatal("Fatal error loadConfig(): No aws-s3-region specified")
+	if viper.GetString("password") == "changeit" {
+		log.Print("Warning: The password is set to the default \"changeit\"")
 	}
-	if !viper.IsSet("aws-s3-bucket") {
-		log.Fatal("Fatal error loadConfig(): No aws-s3-bucket specified")
+	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
+		viper.SetDefault("aws-s3-prefix", "")
+		if !viper.IsSet("aws-s3-region") {
+			log.Fatal("Fatal error loadConfig(): No aws-s3-region specified")
+		}
+		if !viper.IsSet("aws-s3-bucket") {
+			log.Fatal("Fatal error loadConfig(): No aws-s3-bucket specified")
+		}
+	} else {
+		log.Print("Warning: No AWS credentials provided")
 	}
 }
 
