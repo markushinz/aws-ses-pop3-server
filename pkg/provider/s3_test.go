@@ -169,15 +169,7 @@ func TestListEmails(t *testing.T) {
 					client: mockClient{
 						items: []mockItem{
 							{
-								key:  "abc123",
-								size: 1000,
-							},
-							{
-								key:  "def456",
-								size: 2000,
-							},
-							{
-								key:  "shouldNotBeLoaded",
+								key:  "should not be loaded as cache is present",
 								size: 0000,
 							},
 						},

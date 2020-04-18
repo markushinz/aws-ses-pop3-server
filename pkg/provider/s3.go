@@ -69,6 +69,23 @@ func initClientAndDownloader(region string) (client *s3.S3, downloader *s3manage
 	return s3.New(sess), s3manager.NewDownloader(sess), nil
 }
 
+func (provider *awsS3Provider) initCache() (err error) {
+	res, err := provider.client.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(provider.bucket)})
+	if err != nil {
+		return err
+	}
+	provider.cache = &awsS3Cache{
+		emails: make(map[int]*email),
+	}
+	for index, item := range res.Contents {
+		provider.cache.emails[index+1] = &email{
+			ID:   strings.TrimPrefix(*item.Key, provider.prefix),
+			Size: *item.Size,
+		}
+	}
+	return nil
+}
+
 func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*email, err error) {
 	if provider.cache == nil {
 		err := provider.initCache()
@@ -90,23 +107,6 @@ func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*ema
 		}
 	}
 	return emails, nil
-}
-
-func (provider *awsS3Provider) initCache() (err error) {
-	res, err := provider.client.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(provider.bucket)})
-	if err != nil {
-		return err
-	}
-	provider.cache = &awsS3Cache{
-		emails: make(map[int]*email),
-	}
-	for index, item := range res.Contents {
-		provider.cache.emails[index+1] = &email{
-			ID:   strings.TrimPrefix(*item.Key, provider.prefix),
-			Size: *item.Size,
-		}
-	}
-	return nil
 }
 
 func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *email, err error) {
