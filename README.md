@@ -59,7 +59,7 @@ aws-s3-prefix: "" # optional, defaults to "" (set this if the emails are not sto
 
 verbose: false # optional, defaults to false
 user: "jane.doe@example.com" # optional, defaults to "user"
-password: "6xRkiWA4mZBSaNmv" # optional, defaults to "changeme". DO CHANGE IT!
+password: "6xRkiWA4mZBSaNmv" # optional, defaults to "changeit". DO CHANGE IT!
 tls-cert: |- # optional, only valid in combination with tls-key, takes precedence over tls-cert-path / tls-key-path
   -----BEGIN CERTIFICATE-----
   [ ... ]
