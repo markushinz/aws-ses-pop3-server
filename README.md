@@ -8,7 +8,7 @@
 
 ### Linux / macOS
 
-```bash
+```shell
 sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/download/aws-ses-pop3-server-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
 sudo chmod +x /usr/local/bin/aws-ses-pop3-server
 ```
