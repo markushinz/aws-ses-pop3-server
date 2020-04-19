@@ -20,7 +20,7 @@ Finally, configure your favorite email client using the POP3 credentials from yo
 
 ### Docker 🐳 / docker-compose / Kubernetes
 
-[`markushinz/aws-ses-pop3-server:1.0.0`](https://github.com/markushinz/aws-ses-pop3-server/packages/190841?version=1.0.0)
+[`markushinz/aws-ses-pop3-server:1.0.0`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
 
 *Hint*: If you want to deploy aws-ses-pop3-server to Kubernetes check [this tutorial](https://minikube.sigs.k8s.io/docs/tutorials/nginx_tcp_udp_ingress/) on how to configure your NGINX Ingress Controller.
 
