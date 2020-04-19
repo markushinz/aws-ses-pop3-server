@@ -2,7 +2,7 @@ version: "3.7"
 services:
   aws-ses-pop3-server-service:
     build: .
-    # image: docker.pkg.github.com/markushinz/aws-ses-pop3-server/aws-ses-pop3-server:latest
+    # image: markushinz/aws-ses-pop3-server:latest
     restart: always
     ports:
       - 110:110
