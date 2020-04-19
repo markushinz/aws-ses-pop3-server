@@ -10,13 +10,13 @@ This implementation serves a fully compliant [RFC1939](https://tools.ietf.org/ht
 
 First, follow the official tutorial [Receiving Email with Amazon SES](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/receiving-email.html) to store emails in a S3 bucket.
 
-Next, create an IAM user that has read and write permissions to the desired S3 bucket.[Create a config file](#config) and start the server using one of the followig options.
+Next, create an IAM user that has read and write permissions to the desired S3 bucket. [Create a config file](#config) and start the server using one of the followig options.
 
 > Either run the server on `localhost:110` and therefore restrict access to your local machine or use TLS!
 
 > Change the default values for user and password!
 
-Finally, configure your favorite email client using the POP3 credentials in your config file 🥳. Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-smtp.html) to obtain SMTP credentials for sending emails. 
+Finally, configure your favorite email client using the POP3 credentials from your config file 🥳. Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-smtp.html) to obtain SMTP credentials for sending emails. 
 
 ### Docker 🐳 / docker-compose / Kubernetes
 
