@@ -38,7 +38,7 @@ aws-ses-pop3-server can be configured using environment variables and / or a con
 aws-ses-pop3-server looks for config files at the following locations and in the depicted order:
 
 * `/etc/aws-ses-pop3-server/config.yaml`
-* `$HOME/.aws-ses-pop3-server/config.yaml` (`~/config.yaml`)
+* `$HOME/.aws-ses-pop3-server/config.yaml` (`~/.aws-ses-pop3-server/config.yaml`)
 * `$(pwd)/config.yaml` (present working directory)
 
 Environment variables use the prefix `POP3_` followed by the config key where `-` have to be replaced with `_`. Environment variables take precedence.
