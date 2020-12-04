@@ -29,7 +29,7 @@ Finally, configure your favorite email client using the POP3 credentials from yo
 ```shell
 sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/download/v1.1.0/aws-ses-pop3-server-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
 sudo chmod +x /usr/local/bin/aws-ses-pop3-server
-sudo aws-ses-pop3-server # sudo required for port binding
+aws-ses-pop3-server
 ```
 
 ## Config
