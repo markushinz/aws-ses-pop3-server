@@ -12,7 +12,7 @@ First, follow the official tutorial [Receiving Email with Amazon SES](https://do
 
 Next, create an IAM user that has read and write permissions to the desired S3 bucket. [Create a config file](#config) and start the server using one of the followig options.
 
-> Either run the server on `localhost:110` and therefore restrict access to your local machine or use TLS!
+> Restrict access to your local machine or use TLS!
 
 > Change the default values for user and password!
 
@@ -20,7 +20,7 @@ Finally, configure your favorite email client using the POP3 credentials from yo
 
 ### Docker 🐳 / docker-compose / Kubernetes
 
-[`markushinz/aws-ses-pop3-server:1.0.0`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
+[`markushinz/aws-ses-pop3-server:`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
 
 *Hint*: If you want to deploy aws-ses-pop3-server to Kubernetes check [this tutorial](https://minikube.sigs.k8s.io/docs/tutorials/nginx_tcp_udp_ingress/) on how to configure your NGINX Ingress Controller.
 
@@ -71,6 +71,6 @@ tls-key: |- # optional, only valid in combination with tls-cert, takes precedenc
 tls-cert-path: "etc/aws-ses-pop3-server/tls.crt"  # optional, only valid in combination with tls-key-path
 tls-key-path: "etc/aws-ses-pop3-server/tls"  # optional, only valid in combination with tls-cert-path
 host: "localhost" # optional, defaults to "" (or 0.0.0.0; [::];  listening on all NICs)
-port: 110 # optional, defaults to 110 (or 995 if you specified tls-cert / tls-key or tls-cert-path / tls-key-path)
+port: 2110 # optional, defaults to 2110 (or 2995 if you specified tls-cert / tls-key or tls-cert-path / tls-key-path)
 ```
 

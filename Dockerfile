@@ -1,12 +1,15 @@
-FROM golang:1.13 as builder
+FROM golang:1.15.6 as builder
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
 COPY go.sum .
+RUN go mod download
 COPY main.go .
 COPY pkg ./pkg
-RUN go mod download
 RUN go test -race -v ./...
 RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
-FROM alpine:3.11 as runner
+FROM alpine:3.12.1 as runner
 COPY --from=builder /usr/local/bin/aws-ses-pop3-server /usr/local/bin/aws-ses-pop3-server
+RUN addgroup --gid 1767 appgroup && \
+    adduser --disabled-password --gecos '' --no-create-home -G appgroup --uid 1767 appuser
+USER appuser
 CMD ["aws-ses-pop3-server"]

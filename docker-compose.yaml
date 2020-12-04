@@ -5,7 +5,7 @@ services:
     # image: markushinz/aws-ses-pop3-server:latest
     restart: always
     ports:
-      - 110:110
-      - 995:995
+      - 110:2110
+      - 995:2995
     volumes:
       - ./config.yaml:/etc/aws-ses-pop3-server/config.yaml

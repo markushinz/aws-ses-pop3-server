@@ -103,7 +103,7 @@ func initServerCreator(handlerCreator handler.HandlerCreator) server.ServerCreat
 		)
 	} else {
 		log.Print("Warning: No tls-cert / tls-key or tls-cert-path / tls-cert-key specified. TLS will be disabled. DO NOT USE IN PRODUCTION!")
-		viper.SetDefault("port", 110)
+		viper.SetDefault("port", 2110)
 		return server.NewTCPServerCreator(handlerCreator,
 			viper.GetString("host"),
 			viper.GetInt("port"),
@@ -112,7 +112,7 @@ func initServerCreator(handlerCreator handler.HandlerCreator) server.ServerCreat
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Fatal error loadServerCreator(): %v", err))
 	}
-	viper.SetDefault("port", 995)
+	viper.SetDefault("port", 2995)
 	return server.NewTCPTLSServerCreator(handlerCreator,
 		viper.GetString("host"),
 		viper.GetInt("port"),
