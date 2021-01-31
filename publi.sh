@@ -2,6 +2,8 @@
 
 set -e
 
+git diff --exit-code
+
 git fetch
 tag=$(git describe --abbrev=0)
 
@@ -19,15 +21,16 @@ version=${1:-"${major}.${minor}.${patch}"}
 echo "${version}"
 
 go test -race -v ./...
-CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o "dist/$version/aws-ses-pop3-server-Linux"
-CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o "dist/$version/aws-ses-pop3-server-Darwin"
+CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o "dist/$version/aws-ses-pop3-server-x86_64-Linux"
+CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o "dist/$version/aws-ses-pop3-server-x86_64-Darwin"
+CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -o "dist/$version/aws-ses-pop3-server-arm64-Darwin"
 
-docker build -t "markushinz/aws-ses-pop3-server:$version" \
-  -t "markushinz/aws-ses-pop3-server:latest" .
+# docker buildx create --use
+docker buildx build \
+--push \
+--platform linux/amd64,linux/arm64 \
+--tag "markushinz/aws-ses-pop3-server:$version" \
+--tag "markushinz/aws-ses-pop3-server:latest" .
 
 git tag "v$version" -m "v$version"
-
-docker push "markushinz/aws-ses-pop3-server:$version"
-docker push "markushinz/aws-ses-pop3-server:latest"
-
 git push origin "v$version"

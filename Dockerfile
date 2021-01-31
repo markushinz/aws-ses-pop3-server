@@ -6,7 +6,7 @@ RUN go mod download
 COPY main.go .
 COPY pkg ./pkg
 RUN go test -race -v ./...
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
 FROM alpine:3.12.1 as runner
 COPY --from=builder /usr/local/bin/aws-ses-pop3-server /usr/local/bin/aws-ses-pop3-server
 RUN addgroup --gid 1767 appgroup && \
