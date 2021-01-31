@@ -470,7 +470,7 @@ func TestGetEmail(t *testing.T) {
 	}
 }
 
-func TestGetEmaiPayloadl(t *testing.T) {
+func TestGetEmaiPayload(t *testing.T) {
 	type args struct {
 		provider   awsS3Provider
 		number     int
