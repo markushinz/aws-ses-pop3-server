@@ -27,7 +27,7 @@ Finally, configure your favorite email client using the POP3 credentials from yo
 ### Linux / macOS
 
 ```shell
-sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/download/v1.1.1/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
+sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/download/v1.1.2/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
 sudo chmod +x /usr/local/bin/aws-ses-pop3-server
 aws-ses-pop3-server
 ```
