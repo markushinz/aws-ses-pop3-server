@@ -1,8 +1,10 @@
 # aws-ses-pop3-server 💌
 
-The missing POP3 server for [Amazon Simple Email Service](https://aws.amazon.com/de/ses/) - written in golang. Tested with Apple Mail (13.4) and Microsoft Outlook for Mac (16.36).
+The missing POP3 server for [Amazon Simple Email Service](https://aws.amazon.com/de/ses/) - written in golang.
+Tested with Apple Mail 14.0 on macOS 11.1, Apple Mail on iOS 14.1 and Microsoft Outlook for Mac (16.45).
 
-AWS SES is powerful when it comes to sending emails but has only limited functionality to receive them. Officially, only storing them in [Amazon S3](https://aws.amazon.com/de/s3/) and triggering [Amazon Lambda](https://aws.amazon.com/de/lambda/) functions is supported (in certain regions such as *eu-west-1*).
+AWS SES is powerful when it comes to sending emails but has only limited functionality to receive them.
+Officially, only storing them in [Amazon S3](https://aws.amazon.com/de/s3/) and triggering [Amazon Lambda](https://aws.amazon.com/de/lambda/) functions is supported (in certain regions such as *eu-west-1*).
 
 This implementation serves a fully compliant [RFC1939](https://tools.ietf.org/html/rfc1939) POP3 server backed with an S3 bucket for SES.
 
@@ -16,11 +18,12 @@ Next, create an IAM user that has read and write permissions to the desired S3 b
 
 > Change the default values for user and password!
 
-Finally, configure your favorite email client using the POP3 credentials from your config file 🥳. Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-smtp.html) to obtain SMTP credentials for sending emails. 
+Finally, configure your favorite email client using the POP3 credentials from your config file 🥳.
+Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-smtp.html) to obtain SMTP credentials for sending emails.
 
 ### Docker 🐳 / docker-compose / Kubernetes
 
-[`markushinz/aws-ses-pop3-server:`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
+[`markushinz/aws-ses-pop3-server`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
 
 *Hint*: If you want to deploy aws-ses-pop3-server to Kubernetes check [this tutorial](https://minikube.sigs.k8s.io/docs/tutorials/nginx_tcp_udp_ingress/) on how to configure your NGINX Ingress Controller.
 
@@ -73,4 +76,3 @@ tls-key-path: "etc/aws-ses-pop3-server/tls"  # optional, only valid in combinati
 host: "localhost" # optional, defaults to "" (or 0.0.0.0; [::];  listening on all NICs)
 port: 2110 # optional, defaults to 2110 (or 2995 if you specified tls-cert / tls-key or tls-cert-path / tls-key-path)
 ```
-
