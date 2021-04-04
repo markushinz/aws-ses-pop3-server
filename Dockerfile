@@ -1,4 +1,5 @@
 FROM golang:1.16.3 as builder
+ENV GO111MODULE=on
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
 COPY go.sum .
