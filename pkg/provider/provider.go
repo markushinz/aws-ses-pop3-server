@@ -19,6 +19,7 @@ package provider
 import (
 	"bufio"
 	"bytes"
+	"sort"
 )
 
 type ProviderCreator func() (Provider, error)
@@ -68,4 +69,13 @@ func parse(payload EmailPayload, all bool, x int) (lines []string, err error) {
 		return nil, err
 	}
 	return lines, nil
+}
+
+func GetSortedMailNumbers(emails map[int]*Email) []int {
+	var keys []int
+	for key := range emails {
+		keys = append(keys, key)
+	}
+	sort.Ints(keys)
+	return keys
 }

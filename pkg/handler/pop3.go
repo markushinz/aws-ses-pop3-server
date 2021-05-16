@@ -190,8 +190,8 @@ func (handler *pop3Handler) handleUIDL() (responses []string) {
 		return []string{"-ERR"}
 	}
 	responses = append(responses, "+OK")
-	for number, email := range emails {
-		responses = append(responses, fmt.Sprintf("%v %v", number, email.ID))
+	for number := range provider.GetSortedMailNumbers(emails) {
+		responses = append(responses, fmt.Sprintf("%v %v", number, emails[number].ID))
 	}
 	responses = append(responses, ".")
 	return responses
@@ -224,8 +224,8 @@ func (handler *pop3Handler) handleLIST() (responses []string) {
 		return []string{"-ERR"}
 	}
 	responses = append(responses, "+OK")
-	for number, email := range emails {
-		responses = append(responses, fmt.Sprintf("%v %v", number, email.Size))
+	for number := range provider.GetSortedMailNumbers(emails) {
+		responses = append(responses, fmt.Sprintf("%v %v", number, emails[number].Size))
 	}
 	responses = append(responses, ".")
 	return responses
