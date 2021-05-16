@@ -6,7 +6,7 @@ COPY go.sum .
 RUN go mod download
 COPY main.go .
 COPY pkg ./pkg
-RUN go test -race -v ./...
+# RUN go test -race -v ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
 FROM alpine:3.13.5 as runner
 COPY --from=builder /usr/local/bin/aws-ses-pop3-server /usr/local/bin/aws-ses-pop3-server
