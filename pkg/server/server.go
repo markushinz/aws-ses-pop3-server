@@ -59,7 +59,13 @@ func handleConnection(handlerCreator handler.HandlerCreator, connection net.Conn
 		}
 		message := strings.TrimRight(string(bytes), "\r\n")
 		responses, quit := handler.Handle(message)
-		for _, response := range responses {
+		for i, response := range responses {
+			// If any line of the multi-line response begins with the termination octet,
+			// the line is "byte-stuffed" by pre-pending the termination octet to that line of the response.
+			// Source: https://www.ietf.org/rfc/rfc1939.txt
+			if strings.HasPrefix(response, ".") && i < len(responses)-1 {
+				response = "." + response
+			}
 			connection.Write([]byte(response + "\r\n"))
 		}
 		if quit {
