@@ -54,7 +54,7 @@ func newPOP3Handler(providerCreator provider.ProviderCreator, user, password str
 		return nil, "", err
 	}
 	response := "+OK"
-	pop3log([]string{response}, false, verbose)
+	handler.log([]string{response}, false, verbose)
 	return &pop3Handler{
 		provider: provider,
 		user:     user,
@@ -65,12 +65,12 @@ func newPOP3Handler(providerCreator provider.ProviderCreator, user, password str
 }
 
 func (handler *pop3Handler) Handle(message string) (responses []string, quit bool) {
-	pop3log([]string{message}, true, handler.verbose)
+	handler.log([]string{message}, true, handler.verbose)
 	switch handler.state {
 	case "AUTHORIZATION":
 		switch {
 		case message == "CAPA":
-			responses = []string{"+OK", "TOP", "UIDL", "USER", "."}
+			responses = handler.handleCAPA()
 		case strings.HasPrefix(message, "USER"):
 			responses = handler.handleUSER(message)
 		case strings.HasPrefix(message, "PASS"):
@@ -80,6 +80,8 @@ func (handler *pop3Handler) Handle(message string) (responses []string, quit boo
 		}
 	case "TRANSACTION":
 		switch {
+		case message == "CAPA":
+			responses = handler.handleCAPA()
 		case message == "STAT":
 			responses = handler.handleSTAT()
 		case message == "UIDL":
@@ -110,7 +112,7 @@ func (handler *pop3Handler) Handle(message string) (responses []string, quit boo
 	default:
 		responses = []string{"-ERR"}
 	}
-	pop3log(responses, false, handler.verbose)
+	handler.log(responses, false, handler.verbose)
 	return responses, quit
 }
 
@@ -121,7 +123,7 @@ func (handler *pop3Handler) CloseConnection() {
 	}
 }
 
-func pop3log(data []string, incoming bool, verbose bool) {
+func (handler *pop3Handler) log(data []string, incoming bool, verbose bool) {
 	prefix := "-->"
 	if incoming {
 		prefix = "<--"
@@ -131,12 +133,16 @@ func pop3log(data []string, incoming bool, verbose bool) {
 			datum = "PASS [ *** ]"
 		}
 		if index == 0 || index == len(data)-1 || verbose {
-			log.Printf("%v %v", prefix, datum)
+			log.Printf("%v %v %v", handler.state, prefix, datum)
 		} else if index == len(data)-2 {
-			log.Printf("%v [ ... ]", prefix)
+			log.Printf("%v %v [ ... ]", handler.state, prefix)
 		}
 	}
 }
+func (handler *pop3Handler) handleCAPA() (responses []string) {
+	return []string{"+OK", "TOP", "UIDL", "USER", "."}
+}
+
 func (handler *pop3Handler) handleUSER(message string) (responses []string) {
 	if len(strings.Split(message, " ")) < 2 {
 		err := fmt.Errorf("invalid message")
