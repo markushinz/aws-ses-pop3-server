@@ -52,7 +52,7 @@ func newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasSuffix(prefix, "/") {
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 	return &awsS3Provider{
