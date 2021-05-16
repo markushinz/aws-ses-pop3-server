@@ -52,6 +52,9 @@ func newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix
 	if err != nil {
 		return nil, err
 	}
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
 	return &awsS3Provider{
 		bucket:     bucket,
 		prefix:     prefix,
@@ -72,7 +75,10 @@ func initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region string) 
 }
 
 func (provider *awsS3Provider) initCache() (err error) {
-	res, err := provider.client.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(provider.bucket)})
+	res, err := provider.client.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: aws.String(provider.bucket),
+		Prefix: aws.String(provider.prefix),
+	})
 	if err != nil {
 		return err
 	}
