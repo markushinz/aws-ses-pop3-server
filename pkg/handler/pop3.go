@@ -53,15 +53,16 @@ func newPOP3Handler(providerCreator provider.ProviderCreator, user, password str
 	if err != nil {
 		return nil, "", err
 	}
-	response := "+OK"
-	handler.log([]string{response}, false, verbose)
-	return &pop3Handler{
+	handler = &pop3Handler{
 		provider: provider,
 		user:     user,
 		password: password,
 		verbose:  verbose,
 		state:    "AUTHORIZATION",
-	}, response, nil
+	}
+	response := "+OK"
+	handler.log([]string{response}, false, verbose)
+	return handler, response, nil
 }
 
 func (handler *pop3Handler) Handle(message string) (responses []string, quit bool) {
