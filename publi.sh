@@ -2,6 +2,7 @@
 
 set -e
 
+go mod tidy
 git diff --exit-code
 
 git fetch
