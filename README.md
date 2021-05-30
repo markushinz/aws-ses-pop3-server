@@ -30,7 +30,7 @@ Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email]
 ### Linux / macOS
 
 ```shell
-sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/download/v1.4.3/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
+sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/latest/download/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
 sudo chmod +x /usr/local/bin/aws-ses-pop3-server
 aws-ses-pop3-server
 ```
