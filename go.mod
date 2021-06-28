@@ -4,6 +4,6 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.38.51
-	github.com/spf13/viper v1.7.1
+	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
 )
