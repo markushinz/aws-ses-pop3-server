@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,44 +21,42 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/markushinz/aws-ses-pop3-server/pkg/provider"
 )
 
-var mutex sync.Mutex
-
 type pop3Cache struct {
-	user *string
-	dele []int
+	user     *string
+	provider provider.Provider
+	dele     []int
 }
 
 type pop3Handler struct {
-	provider provider.Provider
-	user     string
-	password string
-	verbose  bool
-	state    string
-	cache    pop3Cache
+	providerCreator provider.ProviderCreator
+	verbose         bool
+	cache           pop3Cache
 }
 
-func NewPOP3HandlerCreator(providerCreator provider.ProviderCreator, user, password string, verbose bool) func() (handler Handler, response string, err error) {
+func (handler pop3Handler) getState() string {
+	if handler.cache.provider == nil {
+		return "AUTHORIZATION"
+	}
+	return "TRANSACTION"
+}
+
+func NewPOP3HandlerCreator(providerCreator provider.ProviderCreator, verbose bool) HandlerCreator {
 	return func() (handler Handler, response string, err error) {
-		return newPOP3Handler(providerCreator, user, password, verbose)
+		return newPOP3Handler(providerCreator, verbose)
 	}
 }
 
-func newPOP3Handler(providerCreator provider.ProviderCreator, user, password string, verbose bool) (handler *pop3Handler, responses string, err error) {
-	provider, err := providerCreator()
+func newPOP3Handler(providerCreator provider.ProviderCreator, verbose bool) (handler *pop3Handler, responses string, err error) {
 	if err != nil {
 		return nil, "", err
 	}
 	handler = &pop3Handler{
-		provider: provider,
-		user:     user,
-		password: password,
-		verbose:  verbose,
-		state:    "AUTHORIZATION",
+		providerCreator: providerCreator,
+		verbose:         verbose,
 	}
 	response := "+OK"
 	handler.log([]string{response}, false, verbose)
@@ -67,61 +65,44 @@ func newPOP3Handler(providerCreator provider.ProviderCreator, user, password str
 
 func (handler *pop3Handler) Handle(message string) (responses []string, quit bool) {
 	handler.log([]string{message}, true, handler.verbose)
-	switch handler.state {
-	case "AUTHORIZATION":
-		switch {
-		case message == "CAPA":
-			responses = handler.handleCAPA()
-		case strings.HasPrefix(message, "USER"):
-			responses = handler.handleUSER(message)
-		case strings.HasPrefix(message, "PASS"):
-			responses = handler.handlePASS(message)
-		default:
-			responses = []string{"-ERR"}
-		}
-	case "TRANSACTION":
-		switch {
-		case message == "CAPA":
-			responses = handler.handleCAPA()
-		case message == "STAT":
-			responses = handler.handleSTAT()
-		case message == "UIDL":
-			responses = handler.handleUIDL()
-		case strings.HasPrefix(message, "UIDL"):
-			responses = handler.handleUIDLn(message)
-		case message == "LIST":
-			responses = handler.handleLIST()
-		case strings.HasPrefix(message, "LIST"):
-			responses = handler.handleLISTn(message)
-		case strings.HasPrefix(message, "TOP"):
-			responses = handler.handleTOP(message)
-		case strings.HasPrefix(message, "RETR"):
-			responses = handler.handleRETR(message)
-		case strings.HasPrefix(message, "DELE"):
-			responses = handler.handleDELE(message)
-		case message == "NOOP":
-			responses = []string{"+OK"}
-		case message == "RSET":
-			handler.cache.dele = nil
-			responses = []string{"+OK"}
-		case message == "QUIT":
-			responses = handler.handleQUIT()
-			quit = true
-		default:
-			responses = []string{"-ERR"}
-		}
+	switch {
+	case message == "CAPA":
+		responses = handler.handleCAPA()
+	case strings.HasPrefix(message, "USER"):
+		responses = handler.handleUSER(message)
+	case strings.HasPrefix(message, "PASS"):
+		responses = handler.handlePASS(message)
+	case handler.getState() != "TRANSACTION":
+		responses = []string{"-ERR"}
+	case message == "STAT":
+		responses = handler.handleSTAT()
+	case message == "UIDL":
+		responses = handler.handleUIDL()
+	case strings.HasPrefix(message, "UIDL"):
+		responses = handler.handleUIDLn(message)
+	case message == "LIST":
+		responses = handler.handleLIST()
+	case strings.HasPrefix(message, "LIST"):
+		responses = handler.handleLISTn(message)
+	case strings.HasPrefix(message, "TOP"):
+		responses = handler.handleTOP(message)
+	case strings.HasPrefix(message, "RETR"):
+		responses = handler.handleRETR(message)
+	case strings.HasPrefix(message, "DELE"):
+		responses = handler.handleDELE(message)
+	case message == "NOOP":
+		responses = []string{"+OK"}
+	case message == "RSET":
+		handler.cache.dele = nil
+		responses = []string{"+OK"}
+	case message == "QUIT":
+		responses = handler.handleQUIT()
+		quit = true
 	default:
 		responses = []string{"-ERR"}
 	}
 	handler.log(responses, false, handler.verbose)
 	return responses, quit
-}
-
-func (handler *pop3Handler) CloseConnection() {
-	if handler.state != "AUTHORIZATION" {
-		handler.state = "AUTHORIZATION"
-		mutex.Unlock()
-	}
 }
 
 func (handler *pop3Handler) log(data []string, incoming bool, verbose bool) {
@@ -134,9 +115,9 @@ func (handler *pop3Handler) log(data []string, incoming bool, verbose bool) {
 			datum = "PASS [ *** ]"
 		}
 		if index == 0 || index == len(data)-1 || verbose {
-			log.Printf("%v %v %v", handler.state, prefix, datum)
+			log.Printf("%v %v %v", handler.getState(), prefix, datum)
 		} else if index == len(data)-2 {
-			log.Printf("%v %v [ ... ]", handler.state, prefix)
+			log.Printf("%v %v [ ... ]", handler.getState(), prefix)
 		}
 	}
 }
@@ -162,18 +143,18 @@ func (handler *pop3Handler) handlePASS(message string) (responses []string) {
 		return []string{"-ERR"}
 	}
 	password := strings.TrimPrefix(message, "PASS ")
-	if handler.user == *handler.cache.user && handler.password == password {
-		mutex.Lock()
-		handler.state = "TRANSACTION"
-		return []string{"+OK"}
+	provider, err := handler.providerCreator(*handler.cache.user, password)
+	if err != nil {
+		return []string{"-ERR"}
 	}
-	return []string{"-ERR"}
+	handler.cache.provider = provider
+	return []string{"+OK"}
 }
 
 func (handler *pop3Handler) handleSTAT() (responses []string) {
-	emails, err := handler.provider.ListEmails(handler.cache.dele)
+	emails, err := handler.cache.provider.ListEmails(handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.ListEmails(): %v", err)
+		log.Printf("Error handler.cache.provider.ListEmails(): %v", err)
 		return []string{"-ERR"}
 	}
 	var totalSize int64
@@ -184,9 +165,9 @@ func (handler *pop3Handler) handleSTAT() (responses []string) {
 }
 
 func (handler *pop3Handler) handleUIDL() (responses []string) {
-	emails, err := handler.provider.ListEmails(handler.cache.dele)
+	emails, err := handler.cache.provider.ListEmails(handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.ListEmails(): %v", err)
+		log.Printf("Error handler.cache.provider.ListEmails(): %v", err)
 		return []string{"-ERR"}
 	}
 	responses = append(responses, "+OK")
@@ -209,18 +190,18 @@ func (handler *pop3Handler) handleUIDLn(message string) (responses []string) {
 		log.Printf("Error handleUIDLn(): %v", err)
 		return []string{"-ERR"}
 	}
-	email, err := handler.provider.GetEmail(number, handler.cache.dele)
+	email, err := handler.cache.provider.GetEmail(number, handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.GetEmail(): %v", err)
+		log.Printf("Error handler.cache.provider.GetEmail(): %v", err)
 		return []string{"-ERR"}
 	}
 	return []string{fmt.Sprintf("+OK %v %v", number, email.ID)}
 }
 
 func (handler *pop3Handler) handleLIST() (responses []string) {
-	emails, err := handler.provider.ListEmails(handler.cache.dele)
+	emails, err := handler.cache.provider.ListEmails(handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.ListEmails(): %v", err)
+		log.Printf("Error handler.cache.provider.ListEmails(): %v", err)
 		return []string{"-ERR"}
 	}
 	responses = append(responses, "+OK")
@@ -243,9 +224,9 @@ func (handler *pop3Handler) handleLISTn(message string) (responses []string) {
 		log.Printf("Error handleLISTn(): %v", err)
 		return []string{"-ERR"}
 	}
-	email, err := handler.provider.GetEmail(number, handler.cache.dele)
+	email, err := handler.cache.provider.GetEmail(number, handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.GetEmail(): %v", err)
+		log.Printf("Error handler.cache.provider.GetEmail(): %v", err)
 		return []string{"-ERR"}
 	}
 	return []string{fmt.Sprintf("+OK %v %v", number, email.Size)}
@@ -268,9 +249,9 @@ func (handler *pop3Handler) handleTOP(message string) (responses []string) {
 		log.Printf("Error handleTOP(): %v", err)
 		return []string{"-ERR"}
 	}
-	payload, err := handler.provider.GetEmailPayload(number, handler.cache.dele)
+	payload, err := handler.cache.provider.GetEmailPayload(number, handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.GetEmailPayload(): %v", err)
+		log.Printf("Error handler.cache.provider.GetEmailPayload(): %v", err)
 		return []string{"-ERR"}
 	}
 	lines, err := payload.ParseHeaders(x)
@@ -298,9 +279,9 @@ func (handler *pop3Handler) handleRETR(message string) (responses []string) {
 		log.Printf("Error handleRETR(): %v", err)
 		return []string{"-ERR"}
 	}
-	payload, err := handler.provider.GetEmailPayload(number, handler.cache.dele)
+	payload, err := handler.cache.provider.GetEmailPayload(number, handler.cache.dele)
 	if err != nil {
-		log.Printf("Error handler.provider.GetEmailPayload(): %v", err)
+		log.Printf("Error handler.cache.provider.GetEmailPayload(): %v", err)
 		return []string{"-ERR"}
 	}
 	lines, err := payload.ParseAll()
@@ -333,9 +314,9 @@ func (handler *pop3Handler) handleDELE(message string) (responses []string) {
 }
 
 func (handler *pop3Handler) handleQUIT() (responses []string) {
-	handler.state = "UPDATE"
+	// handler.state = "UPDATE"
 	for _, number := range handler.cache.dele {
-		err := handler.provider.DeleteEmail(number)
+		err := handler.cache.provider.DeleteEmail(number)
 		if err != nil {
 			log.Printf("Error handleQUIT(): %v", err)
 			return []string{"-ERR"}

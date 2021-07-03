@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -41,22 +41,17 @@ type awsS3Provider struct {
 	cache      *awsS3Cache
 }
 
-func NewAWSS3ProviderCreator(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix string) func() (Provider, error) {
-	return func() (Provider, error) {
-		return newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix)
-	}
-}
-
-func newAWSS3Provider(awsAccessKeyID, awsSecretAccessKey, region, bucket, prefix string) (provider *awsS3Provider, err error) {
-	client, downloader, err := initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region)
+func newAWSS3Provider(jwt JWT) (provider *awsS3Provider, err error) {
+	client, downloader, err := initClientAndDownloader(jwt.AWSAccessKeyID, jwt.AWSSecretAccessKey, jwt.Region)
 	if err != nil {
 		return nil, err
 	}
+	prefix := jwt.Prefix
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 	return &awsS3Provider{
-		bucket:     bucket,
+		bucket:     jwt.Bucket,
 		prefix:     prefix,
 		client:     client,
 		downloader: downloader,

@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -26,28 +26,30 @@ import (
 
 type tcpServer struct {
 	handlerCreator handler.HandlerCreator
-	host           string
-	port           int
+	listener       net.Listener
 }
 
-func NewTCPServerCreator(handlerCreator handler.HandlerCreator, host string, port int) func() (server Server) {
+func NewTCPServerCreator(handlerCreator handler.HandlerCreator, host string, port int) ServerCreator {
 	return func() (server Server) {
 		return newTCPServer(handlerCreator, host, port)
 	}
 }
 
 func newTCPServer(handlerCreator handler.HandlerCreator, host string, port int) (server *tcpServer) {
+	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Fatal error: server.Listen(): %v", err))
+	}
 	return &tcpServer{
 		handlerCreator: handlerCreator,
-		host:           host,
-		port:           port,
+		listener:       listener,
 	}
 }
 
 func (server *tcpServer) Listen() {
-	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%v", server.host, server.port))
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Fatal error: server.Listen(): %v", err))
-	}
-	acceptConnections(server.handlerCreator, listener)
+	acceptConnections(server.handlerCreator, server.listener)
+}
+
+func (server *tcpServer) Close() error {
+	return server.listener.Close()
 }
