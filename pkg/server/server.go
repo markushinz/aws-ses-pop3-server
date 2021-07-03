@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package server
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -30,6 +31,7 @@ type ServerCreator func() (server Server)
 
 type Server interface {
 	Listen()
+	Close() error
 }
 
 func acceptConnections(handlerCreator handler.HandlerCreator, listener net.Listener) {
@@ -37,6 +39,9 @@ func acceptConnections(handlerCreator handler.HandlerCreator, listener net.Liste
 	for {
 		connection, err := listener.Accept()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
 			fmt.Printf("Error: acceptConnections(): %v", err)
 		} else {
 			go handleConnection(handlerCreator, connection)
@@ -78,5 +83,4 @@ func handleConnection(handlerCreator handler.HandlerCreator, connection net.Conn
 func closeConnection(handler handler.Handler, connection net.Conn) {
 	log.Printf("Info: %v disconnected", connection.RemoteAddr().String())
 	connection.Close()
-	handler.CloseConnection()
 }

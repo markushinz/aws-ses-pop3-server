@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,12 +21,6 @@ import (
 )
 
 type noneProvider struct {
-}
-
-func NewNoneProviderCreator() func() (Provider, error) {
-	return func() (Provider, error) {
-		return newNoneProvider()
-	}
 }
 
 func newNoneProvider() (provider *noneProvider, err error) {

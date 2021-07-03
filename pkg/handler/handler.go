@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,5 +20,4 @@ type HandlerCreator func() (handler Handler, response string, err error)
 
 type Handler interface {
 	Handle(message string) (responses []string, quit bool)
-	CloseConnection()
 }

@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -50,28 +50,10 @@ func main() {
 }
 
 func initProviderCreator() provider.ProviderCreator {
-	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
-		viper.SetDefault("aws-s3-prefix", "")
-		if !viper.IsSet("aws-s3-region") {
-			log.Fatal("Fatal error loadProviderCreator(): No aws-s3-region specified")
-		}
-		if !viper.IsSet("aws-s3-bucket") {
-			log.Fatal("Fatal error loadProviderCreator(): No aws-s3-bucket specified")
-		}
-		return provider.NewAWSS3ProviderCreator(
-			viper.GetString("aws-access-key-id"),
-			viper.GetString("aws-secret-access-key"),
-			viper.GetString("aws-s3-region"),
-			viper.GetString("aws-s3-bucket"),
-			viper.GetString("aws-s3-prefix"),
-		)
+	if !viper.IsSet("jwt-secret") {
+		log.Print("Warning: No jwt-secret specified. Therefore, no JWTs to connect to arbitrary S3 buckets can be used.")
 	}
-	log.Print("Warning: No aws-access-key-id / aws-secret-access-key specified. NoneProviderCreator will be used")
-	return provider.NewNoneProviderCreator()
-}
 
-func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {
-	viper.SetDefault("verbose", false)
 	if !viper.IsSet("user") {
 		log.Print("Warning: No user specified. \"user\" will be used")
 	}
@@ -80,10 +62,37 @@ func initHandlerCreator(providerCreator provider.ProviderCreator) handler.Handle
 		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
 	}
 	viper.SetDefault("password", "changeit")
+	legacy := provider.Legacy{
+		User:     viper.GetString("user"),
+		Password: viper.GetString("password"),
+	}
+	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
+		viper.SetDefault("aws-s3-prefix", "")
+		if !viper.IsSet("aws-s3-region") {
+			log.Fatal("Fatal error initProviderCreator(): No aws-s3-region specified")
+		}
+		if !viper.IsSet("aws-s3-bucket") {
+			log.Fatal("Fatal error initProviderCreator(): No aws-s3-bucket specified")
+		}
+		legacy.JWT = &provider.JWT{
+			AWSAccessKeyID:     viper.GetString("aws-access-key-id"),
+			AWSSecretAccessKey: viper.GetString("aws-secret-access-key"),
+			Region:             viper.GetString("aws-s3-region"),
+			Bucket:             viper.GetString("aws-s3-bucket"),
+			Prefix:             viper.GetString("aws-s3-prefix"),
+		}
+	}
+
+	return provider.NewProviderCreator(
+		viper.GetString("jwt-secret"),
+		legacy,
+	)
+}
+
+func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {
+	viper.SetDefault("verbose", false)
 	return handler.NewPOP3HandlerCreator(
 		providerCreator,
-		viper.GetString("user"),
-		viper.GetString("password"),
 		viper.GetBool("verbose"),
 	)
 }

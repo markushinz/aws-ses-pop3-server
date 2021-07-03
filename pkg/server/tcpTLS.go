@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,37 +20,38 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/markushinz/aws-ses-pop3-server/pkg/handler"
 )
 
 type tcpTLSServer struct {
 	handlerCreator handler.HandlerCreator
-	host           string
-	port           int
-	certificate    tls.Certificate
+	listener       net.Listener
 }
 
-func NewTCPTLSServerCreator(handlerCreator handler.HandlerCreator, host string, port int, certificate tls.Certificate) func() (server Server) {
+func NewTCPTLSServerCreator(handlerCreator handler.HandlerCreator, host string, port int, certificate tls.Certificate) ServerCreator {
 	return func() (server Server) {
 		return newTCPTLSServer(handlerCreator, host, port, certificate)
 	}
 }
 
 func newTCPTLSServer(handlerCreator handler.HandlerCreator, host string, port int, certificate tls.Certificate) (server *tcpTLSServer) {
+	config := &tls.Config{Certificates: []tls.Certificate{certificate}}
+	listener, err := tls.Listen("tcp", fmt.Sprintf("%v:%v", host, port), config)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Fatal error: server.Listen(): %v", err))
+	}
 	return &tcpTLSServer{
 		handlerCreator: handlerCreator,
-		host:           host,
-		port:           port,
-		certificate:    certificate,
+		listener:       listener,
 	}
 }
 
 func (server *tcpTLSServer) Listen() {
-	config := &tls.Config{Certificates: []tls.Certificate{server.certificate}}
-	listener, err := tls.Listen("tcp", fmt.Sprintf("%v:%v", server.host, server.port), config)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Fatal error: server.Listen(): %v", err))
-	}
-	acceptConnections(server.handlerCreator, listener)
+	acceptConnections(server.handlerCreator, server.listener)
+}
+
+func (server *tcpTLSServer) Close() error {
+	return server.listener.Close()
 }

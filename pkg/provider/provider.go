@@ -1,5 +1,5 @@
 /*
-   Copyright 2020 Markus Hinz
+   Copyright 2021 Markus Hinz
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 package provider
 
 import (
-	"bufio"
-	"bytes"
-	"sort"
+	"fmt"
+	"strings"
+
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-type ProviderCreator func() (Provider, error)
+type ProviderCreator func(user, password string) (Provider, error)
 
 type Provider interface {
 	ListEmails(notNumbers []int) (emails map[int]*Email, err error)
@@ -31,51 +32,40 @@ type Provider interface {
 	DeleteEmail(number int) (err error)
 }
 
-type EmailPayload []byte
-
-type Email struct {
-	ID              string
-	Size            int64
-	payloadOptional *EmailPayload
+type JWT struct {
+	AWSAccessKeyID     string `json:"awsAccessKeyID,omitempty"`
+	AWSSecretAccessKey string `json:"awsSecretAccessKey,omitempty"`
+	Region             string `json:"region,omitempty"`
+	Bucket             string `json:"bucket,omitempty"`
+	Prefix             string `json:"prefix,omitempty"`
 }
 
-func (payload EmailPayload) ParseAll() (lines []string, err error) {
-	return parse(payload, true, 0)
+type Legacy struct {
+	User     string
+	Password string
+	JWT      *JWT
 }
 
-func (payload EmailPayload) ParseHeaders(x int) (lines []string, err error) {
-	return parse(payload, false, x)
-}
-
-func parse(payload EmailPayload, all bool, x int) (lines []string, err error) {
-	reader := bytes.NewReader(payload)
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		lines = append(lines, line)
-		if !all && line == "" {
-			for x > 0 {
-				if scanner.Scan() {
-					lines = append(lines, scanner.Text())
-					x--
-				} else {
-					break
-				}
+func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
+	return func(user, password string) (Provider, error) {
+		switch {
+		case user == legacy.User && password == legacy.Password:
+			if legacy.JWT != nil {
+				return newAWSS3Provider(*legacy.JWT)
 			}
-			break
+			return newNoneProvider()
+		case strings.EqualFold(user, "jwt"):
+			token, err := jwt.ParseSigned(password)
+			if err != nil {
+				return nil, err
+			}
+			decoded := JWT{}
+			if err := token.Claims([]byte(jwtSecret), &decoded); err != nil {
+				return nil, err
+			}
+			return newAWSS3Provider(decoded)
+		default:
+			return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return lines, nil
-}
-
-func GetSortedMailNumbers(emails map[int]*Email) []int {
-	var keys []int
-	for key := range emails {
-		keys = append(keys, key)
-	}
-	sort.Ints(keys)
-	return keys
 }
