@@ -41,6 +41,8 @@ type awsS3Provider struct {
 	cache      *awsS3Cache
 }
 
+var _ Provider = &awsS3Provider{}
+
 func newAWSS3Provider(jwt JWT) (provider *awsS3Provider, err error) {
 	client, downloader, err := initClientAndDownloader(jwt.AWSAccessKeyID, jwt.AWSSecretAccessKey, jwt.Region)
 	if err != nil {

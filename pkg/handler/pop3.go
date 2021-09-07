@@ -37,12 +37,7 @@ type pop3Handler struct {
 	cache           pop3Cache
 }
 
-func (handler pop3Handler) getState() string {
-	if handler.cache.provider == nil {
-		return "AUTHORIZATION"
-	}
-	return "TRANSACTION"
-}
+var _ Handler = &pop3Handler{}
 
 func NewPOP3HandlerCreator(providerCreator provider.ProviderCreator, verbose bool) HandlerCreator {
 	return func() (handler Handler, response string, err error) {
@@ -61,6 +56,13 @@ func newPOP3Handler(providerCreator provider.ProviderCreator, verbose bool) (han
 	response := "+OK"
 	handler.log([]string{response}, false, verbose)
 	return handler, response, nil
+}
+
+func (handler *pop3Handler) getState() string {
+	if handler.cache.provider == nil {
+		return "AUTHORIZATION"
+	}
+	return "TRANSACTION"
 }
 
 func (handler *pop3Handler) Handle(message string) (responses []string, quit bool) {
@@ -314,7 +316,6 @@ func (handler *pop3Handler) handleDELE(message string) (responses []string) {
 }
 
 func (handler *pop3Handler) handleQUIT() (responses []string) {
-	// handler.state = "UPDATE"
 	for _, number := range handler.cache.dele {
 		err := handler.cache.provider.DeleteEmail(number)
 		if err != nil {

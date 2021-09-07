@@ -29,6 +29,8 @@ type tcpServer struct {
 	listener       net.Listener
 }
 
+var _ Server = &tcpServer{}
+
 func NewTCPServerCreator(handlerCreator handler.HandlerCreator, host string, port int) ServerCreator {
 	return func() (server Server) {
 		return newTCPServer(handlerCreator, host, port)

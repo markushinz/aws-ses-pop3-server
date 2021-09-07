@@ -23,6 +23,8 @@ import (
 type noneProvider struct {
 }
 
+var _ Provider = &noneProvider{}
+
 func newNoneProvider() (provider *noneProvider, err error) {
 	return &noneProvider{}, nil
 }

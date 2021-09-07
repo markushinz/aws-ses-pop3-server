@@ -30,6 +30,8 @@ type tcpTLSServer struct {
 	listener       net.Listener
 }
 
+var _ Server = &tcpServer{}
+
 func NewTCPTLSServerCreator(handlerCreator handler.HandlerCreator, host string, port int, certificate tls.Certificate) ServerCreator {
 	return func() (server Server) {
 		return newTCPTLSServer(handlerCreator, host, port, certificate)
