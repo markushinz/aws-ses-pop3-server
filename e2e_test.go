@@ -33,6 +33,7 @@ const (
 )
 
 func TestE2E(t *testing.T) {
+	t.Parallel()
 	viper.SetConfigType("yaml")
 	assert.NoError(t, viper.ReadConfig(strings.NewReader(fmt.Sprintf(`
 user: %s

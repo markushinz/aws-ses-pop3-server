@@ -41,7 +41,9 @@ type mockClient struct {
 	deleteErr error
 }
 
-func (mock mockClient) ListObjectsV2(input *s3.ListObjectsV2Input) (output *s3.ListObjectsV2Output, err error) {
+var _ s3iface.S3API = &mockClient{}
+
+func (mock *mockClient) ListObjectsV2(input *s3.ListObjectsV2Input) (output *s3.ListObjectsV2Output, err error) {
 	var contents []*s3.Object
 	for _, item := range mock.items {
 		key := item.key
@@ -54,11 +56,11 @@ func (mock mockClient) ListObjectsV2(input *s3.ListObjectsV2Input) (output *s3.L
 	return &s3.ListObjectsV2Output{Contents: contents}, mock.listErr
 }
 
-func (mock mockClient) DeleteObject(*s3.DeleteObjectInput) (input *s3.DeleteObjectOutput, err error) {
+func (mock *mockClient) DeleteObject(*s3.DeleteObjectInput) (input *s3.DeleteObjectOutput, err error) {
 	return &s3.DeleteObjectOutput{}, mock.deleteErr
 }
 
-func (mock mockClient) WaitUntilObjectNotExists(input *s3.HeadObjectInput) error {
+func (mock *mockClient) WaitUntilObjectNotExists(input *s3.HeadObjectInput) error {
 	return mock.deleteErr
 }
 
@@ -68,12 +70,15 @@ type mockDownloader struct {
 	err      error
 }
 
-func (mock mockDownloader) Download(writer io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (size int64, err error) {
+var _ s3manageriface.DownloaderAPI = &mockDownloader{}
+
+func (mock *mockDownloader) Download(writer io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (size int64, err error) {
 	writer.WriteAt(mock.mockItem.bytes, 0)
 	return int64(len(mock.mockItem.bytes)), mock.err
 }
 
 func TestInitCache(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		provider awsS3Provider
 	}
@@ -87,7 +92,7 @@ func TestInitCache(t *testing.T) {
 			name: "no emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{},
+					client: &mockClient{},
 				},
 			},
 		},
@@ -95,7 +100,7 @@ func TestInitCache(t *testing.T) {
 			name: "emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -132,7 +137,7 @@ func TestInitCache(t *testing.T) {
 			name: "overwrite cache",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "should be loaded as the only item as cache is overwritten",
@@ -165,7 +170,7 @@ func TestInitCache(t *testing.T) {
 			name: "error",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						listErr: fmt.Errorf("this should fail"),
 					},
 				},
@@ -174,7 +179,9 @@ func TestInitCache(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			err := tt.args.provider.initCache()
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
@@ -190,6 +197,7 @@ func TestInitCache(t *testing.T) {
 }
 
 func TestListEmails(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		provider   awsS3Provider
 		notNumbers []int
@@ -204,7 +212,7 @@ func TestListEmails(t *testing.T) {
 			name: "no emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{},
+					client: &mockClient{},
 				},
 			},
 		},
@@ -212,7 +220,7 @@ func TestListEmails(t *testing.T) {
 			name: "no emails excluded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{},
+					client: &mockClient{},
 				},
 				notNumbers: []int{2},
 			},
@@ -221,7 +229,7 @@ func TestListEmails(t *testing.T) {
 			name: "emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -258,7 +266,7 @@ func TestListEmails(t *testing.T) {
 			name: "emails excluded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -292,7 +300,7 @@ func TestListEmails(t *testing.T) {
 			name: "cache",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "should not be loaded as cache is present",
@@ -334,7 +342,7 @@ func TestListEmails(t *testing.T) {
 			name: "error",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						listErr: fmt.Errorf("this should fail"),
 					},
 				},
@@ -343,7 +351,9 @@ func TestListEmails(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := tt.args.provider.ListEmails(tt.args.notNumbers)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
@@ -358,6 +368,7 @@ func TestListEmails(t *testing.T) {
 }
 
 func TestGetEmail(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		provider   awsS3Provider
 		number     int
@@ -373,7 +384,7 @@ func TestGetEmail(t *testing.T) {
 			name: "no emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{},
+					client: &mockClient{},
 				},
 				number: 1,
 			},
@@ -383,7 +394,7 @@ func TestGetEmail(t *testing.T) {
 			name: "emails",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -411,7 +422,7 @@ func TestGetEmail(t *testing.T) {
 			name: "emails out of range",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -436,7 +447,7 @@ func TestGetEmail(t *testing.T) {
 			name: "emails excluded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -460,7 +471,9 @@ func TestGetEmail(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := tt.args.provider.GetEmail(tt.args.number, tt.args.notNumbers)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
@@ -471,6 +484,7 @@ func TestGetEmail(t *testing.T) {
 }
 
 func TestGetEmaiPayload(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		provider   awsS3Provider
 		number     int
@@ -486,7 +500,7 @@ func TestGetEmaiPayload(t *testing.T) {
 			name: "emails out of range",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -494,7 +508,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							},
 						},
 					},
-					downloader: mockDownloader{
+					downloader: &mockDownloader{
 						mockItem: mockItem{
 							bytes: []byte("Hello World!"),
 						},
@@ -508,7 +522,7 @@ func TestGetEmaiPayload(t *testing.T) {
 			name: "emails excluded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -516,7 +530,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							},
 						},
 					},
-					downloader: mockDownloader{
+					downloader: &mockDownloader{
 						mockItem: mockItem{
 							bytes: []byte("Hello World!"),
 						},
@@ -531,7 +545,7 @@ func TestGetEmaiPayload(t *testing.T) {
 			name: "download",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -539,7 +553,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							},
 						},
 					},
-					downloader: mockDownloader{
+					downloader: &mockDownloader{
 						mockItem: mockItem{
 							bytes: []byte("Hello World!"),
 						},
@@ -554,7 +568,7 @@ func TestGetEmaiPayload(t *testing.T) {
 			name: "cache payload not loaded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -566,7 +580,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							},
 						},
 					},
-					downloader: mockDownloader{
+					downloader: &mockDownloader{
 						mockItem: mockItem{
 							bytes: []byte("Hello World!"),
 						},
@@ -593,7 +607,7 @@ func TestGetEmaiPayload(t *testing.T) {
 			name: "cache payload loaded",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -605,7 +619,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							},
 						},
 					},
-					downloader: mockDownloader{
+					downloader: &mockDownloader{
 						mockItem: mockItem{
 							bytes: []byte("This message should not be loaded as the message is already cached"),
 						},
@@ -635,7 +649,9 @@ func TestGetEmaiPayload(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := tt.args.provider.GetEmailPayload(tt.args.number, tt.args.notNumbers)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
@@ -646,6 +662,7 @@ func TestGetEmaiPayload(t *testing.T) {
 }
 
 func TestDeleteEmail(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		provider awsS3Provider
 		number   int
@@ -659,7 +676,7 @@ func TestDeleteEmail(t *testing.T) {
 			name: "emails out of range",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -676,7 +693,7 @@ func TestDeleteEmail(t *testing.T) {
 			name: "delete",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -692,7 +709,7 @@ func TestDeleteEmail(t *testing.T) {
 			name: "delete cache",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -720,7 +737,7 @@ func TestDeleteEmail(t *testing.T) {
 			name: "delete error",
 			args: args{
 				provider: awsS3Provider{
-					client: mockClient{
+					client: &mockClient{
 						items: []mockItem{
 							{
 								key:  "abc123",
@@ -736,7 +753,9 @@ func TestDeleteEmail(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			err := tt.args.provider.DeleteEmail(tt.args.number)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 		})
