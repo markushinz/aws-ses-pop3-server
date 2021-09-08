@@ -23,6 +23,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		payload EmailPayload
 		all     bool
@@ -190,7 +191,9 @@ Jane`),
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := parse(tt.args.payload, tt.args.all, tt.args.x)
 			assert.EqualValues(t, tt.wantErr, err != nil)
 			assert.EqualValues(t, tt.want, got)
