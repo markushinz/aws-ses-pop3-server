@@ -1,0 +1,14 @@
+name: Merge
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 3,4 * * *"
+jobs:
+  merge:
+    name: Merge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge
+        run: |
+          number=$(GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr list --repo ${{ github.repository }} --limit 1 --author app/dependabot --json number --jq '.[0].number')
+          [[ -n "${number}" ]] && GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr merge --repo ${{ github.repository }} --auto "${number}" --squash || exit 0
