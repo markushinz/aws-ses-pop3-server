@@ -4,17 +4,11 @@ updates:
     directory: /
     schedule:
       interval: daily
-    assignees:
-      - markushinz
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: daily
-    assignees:
-      - markushinz
   - package-ecosystem: gomod
     directory: /
     schedule:
       interval: daily
-    assignees:
-      - markushinz
