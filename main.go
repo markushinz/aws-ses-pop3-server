@@ -54,11 +54,11 @@ func initProviderCreator() provider.ProviderCreator {
 		log.Print("Warning: No jwt-secret specified. Therefore, no JWTs to connect to arbitrary S3 buckets can be used.")
 	}
 
-	if !viper.IsSet("user") {
+	if !viper.IsSet("user") && !viper.IsSet("authorization-lambda") {
 		log.Print("Warning: No user specified. \"user\" will be used")
 	}
 	viper.SetDefault("user", "user")
-	if !viper.IsSet("password") {
+	if !viper.IsSet("password") && !viper.IsSet("authorization-lambda") {
 		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
 	}
 	viper.SetDefault("password", "changeit")

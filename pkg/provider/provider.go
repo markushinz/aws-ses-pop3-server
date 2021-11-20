@@ -54,6 +54,27 @@ type Legacy struct {
 func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 	return func(user, password string) (Provider, error) {
 		switch {
+		case viper.IsSet("authorization-lambda"):
+			ok := CheckAuthorization(user, password, viper.GetString("authorization-lambda"), viper.GetString("aws-s3-region"))
+			if ok {
+				if legacy.JWT != nil {
+					origJSON, err := json.Marshal(&legacy.JWT)
+					if err != nil {
+						return nil, err
+					}
+
+					userJWT := JWT{}
+					if err = json.Unmarshal(origJSON, &userJWT); err != nil {
+						return nil, err
+					}
+					prefix := userJWT.Prefix
+					if prefix != "" && !strings.HasSuffix(prefix, "/") {
+						userJWT.Prefix += "/"
+					}
+					userJWT.Prefix += user
+					return newAWSS3Provider(userJWT)
+				}
+			}
 		case user == legacy.User && password == legacy.Password:
 			if legacy.JWT != nil {
 				return newAWSS3Provider(*legacy.JWT)
@@ -69,18 +90,8 @@ func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 				return nil, err
 			}
 			return newAWSS3Provider(decoded)
-		default:
-			if viper.IsSet("authorization-lambda") && viper.IsSet("aws-s3-region") {
-				ok := CheckAuthorization(user, password, viper.GetString("authorization-lambda"), viper.GetString("aws-s3-region"))
-				if ok {
-					if legacy.JWT != nil {
-						return newAWSS3Provider(*legacy.JWT)
-					}
-					return newNoneProvider()
-				}
-			}
-			return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 		}
+		return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 	}
 }
 

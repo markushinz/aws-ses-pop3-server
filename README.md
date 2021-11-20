@@ -62,7 +62,7 @@ aws-s3-region: "eu-central-1"
 aws-s3-bucket: "aws-ses-pop3-server"
 aws-s3-prefix: "" # optional, defaults to "" (set this if the emails are not stored in the root directory of the S3 bucket)
 
-authorization-lambda: "" # optional (name of the lambda to invoke for authenticating "user" and "password")
+authorization-lambda: "" # optional (name of the lambda to invoke for authenticating "user" and "password". requires "aws-s3-region")
 
 verbose: false # optional, defaults to false
 user: "jane.doe@example.com" # optional, defaults to "user"
