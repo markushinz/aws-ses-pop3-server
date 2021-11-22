@@ -27,7 +27,7 @@ jobs:
           go mod tidy
           git diff --exit-code
 
-          go test --race ./...
+          go test --race --coverprofile cover.out ./...
 
           CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o aws-ses-pop3-server-x86_64-Linux
           CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o aws-ses-pop3-server-x86_64-Darwin
