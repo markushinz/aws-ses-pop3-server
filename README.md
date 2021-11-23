@@ -1,6 +1,7 @@
 # aws-ses-pop3-server 💌
 
 [![CI](https://github.com/markushinz/aws-ses-pop3-server/actions/workflows/ci.yaml/badge.svg)](https://github.com/markushinz/aws-ses-pop3-server/actions/workflows/ci.yaml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=markushinz_aws-ses-pop3-server&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=markushinz_aws-ses-pop3-server)
 
 The missing POP3 server for [Amazon Simple Email Service](https://aws.amazon.com/de/ses/) - written in golang.
 Tested with Apple Mail 14.0 on macOS 11.1, Apple Mail on iOS 14.1 and Microsoft Outlook for Mac 16.45.
