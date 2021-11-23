@@ -17,14 +17,9 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/spf13/viper"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
@@ -46,35 +41,17 @@ type JWT struct {
 }
 
 type Legacy struct {
-	User     string
-	Password string
-	JWT      *JWT
+	User                string
+	Password            string
+	AuthorizationLambda string
+	JWT                 *JWT
 }
 
 func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 	return func(user, password string) (Provider, error) {
 		switch {
-		case viper.IsSet("authorization-lambda"):
-			ok := CheckAuthorization(user, password, viper.GetString("authorization-lambda"), viper.GetString("aws-s3-region"))
-			if ok {
-				if legacy.JWT != nil {
-					origJSON, err := json.Marshal(&legacy.JWT)
-					if err != nil {
-						return nil, err
-					}
-
-					userJWT := JWT{}
-					if err = json.Unmarshal(origJSON, &userJWT); err != nil {
-						return nil, err
-					}
-					prefix := userJWT.Prefix
-					if prefix != "" && !strings.HasSuffix(prefix, "/") {
-						userJWT.Prefix += "/"
-					}
-					userJWT.Prefix += user
-					return newAWSS3Provider(userJWT)
-				}
-			}
+		case legacy.AuthorizationLambda != "":
+			return CheckAuthorization(user, password, legacy.AuthorizationLambda, legacy.JWT)
 		case user == legacy.User && password == legacy.Password:
 			if legacy.JWT != nil {
 				return newAWSS3Provider(*legacy.JWT)
@@ -90,37 +67,8 @@ func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 				return nil, err
 			}
 			return newAWSS3Provider(decoded)
+		default:
+			return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 		}
-		return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 	}
-}
-
-type Authorization struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
-}
-
-func CheckAuthorization(user, password, authorizationLambdaName, region string) bool {
-	svc := lambda.New(session.New(), aws.NewConfig().WithRegion(region))
-	payload, _ := json.Marshal(Authorization{
-		Name:     user,
-		Password: password,
-	})
-
-	input := &lambda.InvokeInput{
-		FunctionName: aws.String(authorizationLambdaName),
-		Payload:      payload,
-	}
-
-	result, err := svc.Invoke(input)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		response := string(result.Payload)
-		authenticated := response == "\"OK\""
-		return authenticated
-	}
-
-	return false
 }
