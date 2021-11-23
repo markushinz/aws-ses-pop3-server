@@ -54,17 +54,28 @@ func initProviderCreator() provider.ProviderCreator {
 		log.Print("Warning: No jwt-secret specified. Therefore, no JWTs to connect to arbitrary S3 buckets can be used.")
 	}
 
-	if !viper.IsSet("user") {
-		log.Print("Warning: No user specified. \"user\" will be used")
+	if viper.IsSet("authorization-lambda") {
+		if !viper.IsSet("aws-access-key-id") || !viper.IsSet("aws-secret-access-key") || !viper.IsSet("aws-s3-region") {
+			log.Fatal("Fatal error initProviderCreator: authorization-lambda requires aws-access-key-id, aws-secret-access-key and aws-s3-region")
+		}
+
+		if viper.IsSet("user") || viper.IsSet("password") {
+			log.Fatal("Fatal error initProviderCreator: authorization-lambda is incompatible with user and password")
+		}
+	} else {
+		if !viper.IsSet("user") {
+			log.Print("Warning: No user specified. \"user\" will be used")
+		}
+		viper.SetDefault("user", "user")
+		if !viper.IsSet("password") {
+			log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
+		}
+		viper.SetDefault("password", "changeit")
 	}
-	viper.SetDefault("user", "user")
-	if !viper.IsSet("password") {
-		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
-	}
-	viper.SetDefault("password", "changeit")
 	legacy := provider.Legacy{
-		User:     viper.GetString("user"),
-		Password: viper.GetString("password"),
+		User:                viper.GetString("user"),
+		Password:            viper.GetString("password"),
+		AuthorizationLambda: viper.GetString("authorization-lambda"),
 	}
 	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
 		viper.SetDefault("aws-s3-prefix", "")

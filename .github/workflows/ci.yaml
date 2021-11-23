@@ -27,11 +27,16 @@ jobs:
           go mod tidy
           git diff --exit-code
 
-          go test --race ./...
+          go test --race --coverprofile cover.out ./...
 
           CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o aws-ses-pop3-server-x86_64-Linux
           CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o aws-ses-pop3-server-x86_64-Darwin
           CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -o aws-ses-pop3-server-arm64-Darwin
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       # - name: Docker - Set up QEMU
       #   uses: docker/setup-qemu-action@v1
       # - name: Docker - Set up Buildx
@@ -57,4 +62,4 @@ jobs:
         run: GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh release create "v${VERSION}" --title "v${VERSION}" --notes "v${VERSION}" ./aws-ses-pop3-server-x86_64-Linux ./aws-ses-pop3-server-x86_64-Darwin ./aws-ses-pop3-server-arm64-Darwin
       - name: Deploy
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh workflow run -R "${{ secrets.DEPLOY_REPO }}" cd.yaml -f "repository=markushinz/aws-ses-pop3-server" -f "tag=v${VERSION}"
+        run: GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh workflow run -R "${{ secrets.DEPLOY_REPO }}" cd.yaml -f "repository=markushinz/aws-ses-pop3-server" -f "tag=v${VERSION}" -f "merge=true"
