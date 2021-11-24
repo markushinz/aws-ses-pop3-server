@@ -41,14 +41,17 @@ type JWT struct {
 }
 
 type Legacy struct {
-	User     string
-	Password string
-	JWT      *JWT
+	User                string
+	Password            string
+	AuthorizationLambda string
+	JWT                 *JWT
 }
 
 func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 	return func(user, password string) (Provider, error) {
 		switch {
+		case legacy.AuthorizationLambda != "":
+			return CheckAuthorization(user, password, legacy.AuthorizationLambda, legacy.JWT)
 		case user == legacy.User && password == legacy.Password:
 			if legacy.JWT != nil {
 				return newAWSS3Provider(*legacy.JWT)

@@ -38,6 +38,23 @@ sudo chmod +x /usr/local/bin/aws-ses-pop3-server
 aws-ses-pop3-server
 ```
 
+## Authorization
+
+There are two distinct mechanisms for authentication.
+
+One way is to provide "user" and "password" entries in the Config file (see below).
+If specified, only USER and PASS exchanges that match these values are considered `authorized`.
+
+In order to be useful, "aws-access-key-id", "aws-secret-access-key" and "aws-region" should also be specified.
+
+The other way is to provide the name of an Authorization Lambda function which is invoked after USER and PASS have been entered.
+
+The Lambda should expect to be called with { user, password } parameters and will return "OK" (or XXXXX) if the user/password is authorized for access.
+
+In order to call the Authorization Lambda, you will need to specify "aws-access-key-id", "aws-secret-access-key" and "aws-region".
+
+These two methods are meant to be mutually exclusive, and a startup error will be thrown if you specify configuration for both methods.
+
 ## Config
 
 aws-ses-pop3-server can be configured using environment variables and / or a config file.
@@ -62,6 +79,8 @@ aws-secret-access-key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 aws-s3-region: "eu-central-1"
 aws-s3-bucket: "aws-ses-pop3-server"
 aws-s3-prefix: "" # optional, defaults to "" (set this if the emails are not stored in the root directory of the S3 bucket)
+
+authorization-lambda: "" # optional (name of the lambda to invoke for authenticating "user" and "password")
 
 verbose: false # optional, defaults to false
 user: "jane.doe@example.com" # optional, defaults to "user"
