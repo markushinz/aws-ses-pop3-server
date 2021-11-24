@@ -51,7 +51,11 @@ func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
 	return func(user, password string) (Provider, error) {
 		switch {
 		case legacy.AuthorizationLambda != "":
-			return CheckAuthorization(user, password, legacy.AuthorizationLambda, legacy.JWT)
+			userJWT, err := CheckAuthorization(user, password, legacy.AuthorizationLambda, legacy.JWT)
+			if err != nil {
+				return nil, err
+			}
+			return newAWSS3Provider(*userJWT)
 		case user == legacy.User && password == legacy.Password:
 			if legacy.JWT != nil {
 				return newAWSS3Provider(*legacy.JWT)

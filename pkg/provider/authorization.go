@@ -16,7 +16,7 @@ type Authorization struct {
 	Password string `json:"password"`
 }
 
-func CheckAuthorization(user, password, authorizationLambda string, jwtInfo *JWT) (Provider, error) {
+func CheckAuthorization(user, password, authorizationLambda string, jwtInfo *JWT) (*JWT, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(jwtInfo.Region),
 		Credentials: credentials.NewStaticCredentials(jwtInfo.AWSAccessKeyID, jwtInfo.AWSSecretAccessKey, ""),
@@ -57,7 +57,7 @@ func CheckAuthorization(user, password, authorizationLambda string, jwtInfo *JWT
 				userJWT.Prefix += "/"
 			}
 			userJWT.Prefix += user
-			return newAWSS3Provider(userJWT)
+			return &userJWT, err
 		} else {
 			return nil, fmt.Errorf("Credentials are not authorized")
 		}
