@@ -139,6 +139,25 @@ func TestE2E(t *testing.T) {
 			},
 		},
 		{
+			name: "JWT s3",
+			config: map[string]string{
+				"jwt-secret": "secret",
+			},
+			run: func(t *testing.T, connection net.Conn) {
+				read(t, connection, "+OK")
+
+				write(t, connection, "USER jwt")
+				read(t, connection, "+OK")
+
+				token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, provider.JWTClaims{
+					Provider: "s3",
+				}).SignedString([]byte("secret"))
+				assert.NoError(t, err)
+				write(t, connection, "PASS "+token)
+				read(t, connection, "+OK")
+			},
+		},
+		{
 			name: "JWT invalid",
 			config: map[string]string{
 				"jwt-secret": "secret",
