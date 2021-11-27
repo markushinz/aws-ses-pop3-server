@@ -50,8 +50,10 @@ func main() {
 }
 
 func initProviderCreator() provider.ProviderCreator {
-	if !viper.IsSet("jwt-secret") {
-		log.Print("Warning: No jwt-secret specified. Therefore, no JWTs to connect to arbitrary S3 buckets can be used.")
+	if viper.IsSet("jwt-secret") {
+		return provider.NewJWTProviderCreator(
+			viper.GetString("jwt-secret"),
+		)
 	}
 
 	if !viper.IsSet("user") {
@@ -62,7 +64,7 @@ func initProviderCreator() provider.ProviderCreator {
 		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
 	}
 	viper.SetDefault("password", "changeit")
-	legacy := provider.Legacy{
+	staticCreds := provider.StaticCredentials{
 		User:     viper.GetString("user"),
 		Password: viper.GetString("password"),
 	}
@@ -74,7 +76,7 @@ func initProviderCreator() provider.ProviderCreator {
 		if !viper.IsSet("aws-s3-bucket") {
 			log.Fatal("Fatal error initProviderCreator(): No aws-s3-bucket specified")
 		}
-		legacy.JWT = &provider.JWT{
+		staticCreds.S3Bucket = &provider.S3Bucket{
 			AWSAccessKeyID:     viper.GetString("aws-access-key-id"),
 			AWSSecretAccessKey: viper.GetString("aws-secret-access-key"),
 			Region:             viper.GetString("aws-s3-region"),
@@ -83,10 +85,7 @@ func initProviderCreator() provider.ProviderCreator {
 		}
 	}
 
-	return provider.NewProviderCreator(
-		viper.GetString("jwt-secret"),
-		legacy,
-	)
+	return provider.NewStaticCredentialsProviderCreator(staticCreds)
 }
 
 func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {
