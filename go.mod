@@ -3,7 +3,7 @@ module github.com/markushinz/aws-ses-pop3-server
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.42.11
+	github.com/aws/aws-sdk-go v1.42.12
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/square/go-jose.v2 v2.6.0
