@@ -19,15 +19,38 @@ package provider
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
 	"sort"
+	"time"
 )
 
 type EmailPayload []byte
 
+var DemoEmail = func() Email {
+	payload := EmailPayload(fmt.Sprintf(`Date: %s
+To: recipient@example.com
+From: aws-ses-pop3-server <sender@example.com>
+Subject: aws-ses-pop3-server
+
+Hello,
+
+You received this message because you successfully set up aws-ses-pop3-server.`, time.Now().Format("Mon, 02 Jan 2006 15:04:05 -0700")))
+	hash := sha1.New()
+	hash.Write(payload)
+	sha := hash.Sum(nil)
+	return Email{
+		ID:      hex.EncodeToString(sha),
+		Size:    int64(len(payload)),
+		Payload: &payload,
+	}
+}()
+
 type Email struct {
-	ID              string
-	Size            int64
-	payloadOptional *EmailPayload
+	ID      string
+	Size    int64
+	Payload *EmailPayload
 }
 
 func (payload EmailPayload) ParseAll() (lines []string, err error) {
