@@ -80,7 +80,7 @@ func (mock *mockDownloader) Download(writer io.WriterAt, input *s3.GetObjectInpu
 func TestInitCache(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		provider awsS3Provider
+		provider s3Provider
 	}
 	tests := []struct {
 		name    string
@@ -91,7 +91,7 @@ func TestInitCache(t *testing.T) {
 		{
 			name: "no emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{},
 				},
 			},
@@ -99,7 +99,7 @@ func TestInitCache(t *testing.T) {
 		{
 			name: "emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -136,7 +136,7 @@ func TestInitCache(t *testing.T) {
 		{
 			name: "overwrite cache",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -145,7 +145,7 @@ func TestInitCache(t *testing.T) {
 							},
 						},
 					},
-					cache: &awsS3Cache{
+					cache: &s3Cache{
 						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
@@ -169,7 +169,7 @@ func TestInitCache(t *testing.T) {
 		{
 			name: "error",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						listErr: fmt.Errorf("this should fail"),
 					},
@@ -199,7 +199,7 @@ func TestInitCache(t *testing.T) {
 func TestListEmails(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		provider   awsS3Provider
+		provider   s3Provider
 		notNumbers []int
 	}
 	tests := []struct {
@@ -211,7 +211,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "no emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{},
 				},
 			},
@@ -219,7 +219,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "no emails excluded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{},
 				},
 				notNumbers: []int{2},
@@ -228,7 +228,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -265,7 +265,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "emails excluded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -299,7 +299,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "cache",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -308,7 +308,7 @@ func TestListEmails(t *testing.T) {
 							},
 						},
 					},
-					cache: &awsS3Cache{
+					cache: &s3Cache{
 						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
@@ -341,7 +341,7 @@ func TestListEmails(t *testing.T) {
 		{
 			name: "error",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						listErr: fmt.Errorf("this should fail"),
 					},
@@ -370,7 +370,7 @@ func TestListEmails(t *testing.T) {
 func TestGetEmail(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		provider   awsS3Provider
+		provider   s3Provider
 		number     int
 		notNumbers []int
 	}
@@ -383,7 +383,7 @@ func TestGetEmail(t *testing.T) {
 		{
 			name: "no emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{},
 				},
 				number: 1,
@@ -393,7 +393,7 @@ func TestGetEmail(t *testing.T) {
 		{
 			name: "emails",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -421,7 +421,7 @@ func TestGetEmail(t *testing.T) {
 		{
 			name: "emails out of range",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -446,7 +446,7 @@ func TestGetEmail(t *testing.T) {
 		{
 			name: "emails excluded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -486,7 +486,7 @@ func TestGetEmail(t *testing.T) {
 func TestGetEmaiPayload(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		provider   awsS3Provider
+		provider   s3Provider
 		number     int
 		notNumbers []int
 	}
@@ -499,7 +499,7 @@ func TestGetEmaiPayload(t *testing.T) {
 		{
 			name: "emails out of range",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -521,7 +521,7 @@ func TestGetEmaiPayload(t *testing.T) {
 		{
 			name: "emails excluded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -544,7 +544,7 @@ func TestGetEmaiPayload(t *testing.T) {
 		{
 			name: "download",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -567,7 +567,7 @@ func TestGetEmaiPayload(t *testing.T) {
 		{
 			name: "cache payload not loaded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -585,7 +585,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							bytes: []byte("Hello World!"),
 						},
 					},
-					cache: &awsS3Cache{
+					cache: &s3Cache{
 						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
@@ -606,7 +606,7 @@ func TestGetEmaiPayload(t *testing.T) {
 		{
 			name: "cache payload loaded",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -624,7 +624,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							bytes: []byte("This message should not be loaded as the message is already cached"),
 						},
 					},
-					cache: &awsS3Cache{
+					cache: &s3Cache{
 						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
@@ -633,7 +633,7 @@ func TestGetEmaiPayload(t *testing.T) {
 							2: {
 								ID:   "def456",
 								Size: 2000,
-								payloadOptional: func() *EmailPayload {
+								Payload: func() *EmailPayload {
 									var greeting EmailPayload
 									greeting = []byte("This is the message that should be loaded")
 									return &greeting
@@ -664,7 +664,7 @@ func TestGetEmaiPayload(t *testing.T) {
 func TestDeleteEmail(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		provider awsS3Provider
+		provider s3Provider
 		number   int
 	}
 	tests := []struct {
@@ -675,7 +675,7 @@ func TestDeleteEmail(t *testing.T) {
 		{
 			name: "emails out of range",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -692,7 +692,7 @@ func TestDeleteEmail(t *testing.T) {
 		{
 			name: "delete",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -708,7 +708,7 @@ func TestDeleteEmail(t *testing.T) {
 		{
 			name: "delete cache",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{
@@ -717,7 +717,7 @@ func TestDeleteEmail(t *testing.T) {
 							},
 						},
 					},
-					cache: &awsS3Cache{
+					cache: &s3Cache{
 						emails: map[int]*Email{
 							1: {
 								ID:   "abc123",
@@ -736,7 +736,7 @@ func TestDeleteEmail(t *testing.T) {
 		{
 			name: "delete error",
 			args: args{
-				provider: awsS3Provider{
+				provider: s3Provider{
 					client: &mockClient{
 						items: []mockItem{
 							{

@@ -50,32 +50,23 @@ func main() {
 }
 
 func initProviderCreator() provider.ProviderCreator {
-	if !viper.IsSet("jwt-secret") {
-		log.Print("Warning: No jwt-secret specified. Therefore, no JWTs to connect to arbitrary S3 buckets can be used.")
+	if viper.IsSet("jwt-secret") {
+		return provider.NewJWTProviderCreator(
+			viper.GetString("jwt-secret"),
+		)
 	}
 
-	if viper.IsSet("authorization-lambda") {
-		if !viper.IsSet("aws-access-key-id") || !viper.IsSet("aws-secret-access-key") || !viper.IsSet("aws-s3-region") {
-			log.Fatal("Fatal error initProviderCreator: authorization-lambda requires aws-access-key-id, aws-secret-access-key and aws-s3-region")
-		}
-
-		if viper.IsSet("user") || viper.IsSet("password") {
-			log.Fatal("Fatal error initProviderCreator: authorization-lambda is incompatible with user and password")
-		}
-	} else {
-		if !viper.IsSet("user") {
-			log.Print("Warning: No user specified. \"user\" will be used")
-		}
-		viper.SetDefault("user", "user")
-		if !viper.IsSet("password") {
-			log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
-		}
-		viper.SetDefault("password", "changeit")
+	if !viper.IsSet("user") && !viper.IsSet("authorization-lambda") {
+		log.Print("Warning: No user specified. \"user\" will be used")
 	}
-	legacy := provider.Legacy{
-		User:                viper.GetString("user"),
-		Password:            viper.GetString("password"),
-		AuthorizationLambda: viper.GetString("authorization-lambda"),
+	viper.SetDefault("user", "user")
+	if !viper.IsSet("password") && !viper.IsSet("authorization-lambda") {
+		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
+	}
+	viper.SetDefault("password", "changeit")
+	staticCreds := provider.StaticCredentials{
+		User:     viper.GetString("user"),
+		Password: viper.GetString("password"),
 	}
 	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
 		viper.SetDefault("aws-s3-prefix", "")
@@ -85,7 +76,7 @@ func initProviderCreator() provider.ProviderCreator {
 		if !viper.IsSet("aws-s3-bucket") {
 			log.Fatal("Fatal error initProviderCreator(): No aws-s3-bucket specified")
 		}
-		legacy.JWT = &provider.JWT{
+		staticCreds.S3Bucket = &provider.S3Bucket{
 			AWSAccessKeyID:     viper.GetString("aws-access-key-id"),
 			AWSSecretAccessKey: viper.GetString("aws-secret-access-key"),
 			Region:             viper.GetString("aws-s3-region"),
@@ -94,10 +85,15 @@ func initProviderCreator() provider.ProviderCreator {
 		}
 	}
 
-	return provider.NewProviderCreator(
-		viper.GetString("jwt-secret"),
-		legacy,
-	)
+	if viper.IsSet("authorization-lambda") {
+		if !viper.IsSet("aws-access-key-id") || !viper.IsSet("aws-secret-access-key") || !viper.IsSet("aws-s3-region") {
+			log.Fatal("Fatal error initProviderCreator: authorization-lambda requires aws-access-key-id, aws-secret-access-key and aws-s3-region")
+		}
+
+		return provider.NewLambdaAuthorizationProviderCreator(viper.GetString("authorization-lambda"), *staticCreds.S3Bucket)
+	}
+
+	return provider.NewStaticCredentialsProviderCreator(staticCreds)
 }
 
 func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {

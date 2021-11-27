@@ -3,10 +3,10 @@ module github.com/markushinz/aws-ses-pop3-server
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.42.11
+	github.com/aws/aws-sdk-go v1.42.12
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
 require (
@@ -23,7 +23,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
