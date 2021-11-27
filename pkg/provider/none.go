@@ -21,26 +21,54 @@ import (
 )
 
 type noneProvider struct {
+	emails map[int]*Email
 }
 
 var _ Provider = &noneProvider{}
 
-func newNoneProvider() (provider *noneProvider, err error) {
-	return &noneProvider{}, nil
+func newNoneProvider(emails ...Email) (provider *noneProvider, err error) {
+	emailsMap := make(map[int]*Email)
+	for index, email := range emails {
+		emailsMap[index+1] = &email
+	}
+	return &noneProvider{
+		emails: emailsMap,
+	}, nil
 }
 
 func (provider *noneProvider) ListEmails(notNumbers []int) (emails map[int]*Email, err error) {
-	return make(map[int]*Email), nil
+	emails = make(map[int]*Email)
+	for index, email := range provider.emails {
+		emails[index] = email
+	}
+	for _, notNumber := range notNumbers {
+		delete(emails, notNumber)
+	}
+	return emails, nil
 }
 
 func (provider *noneProvider) GetEmail(number int, notNumbers []int) (email *Email, err error) {
+	emails, err := provider.ListEmails(notNumbers)
+	if err != nil {
+		return nil, err
+	}
+	if email, exists := emails[number]; exists {
+		return email, nil
+	}
 	return nil, fmt.Errorf("%v does not exist", number)
 }
 
 func (provider *noneProvider) GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error) {
-	return nil, fmt.Errorf("%v does not exist", number)
+	email, err := provider.GetEmail(number, notNumbers)
+	if err != nil {
+		return nil, err
+	}
+	return *email.Payload, nil
 }
 
 func (provider *noneProvider) DeleteEmail(number int) (err error) {
-	return fmt.Errorf("%v does not exist", number)
+	if _, err := provider.GetEmail(number, nil); err != nil {
+		return err
+	}
+	return nil
 }

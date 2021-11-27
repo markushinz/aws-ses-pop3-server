@@ -29,21 +29,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 )
 
-type awsS3Cache struct {
+type s3Cache struct {
 	emails map[int]*Email
 }
 
-type awsS3Provider struct {
+type s3Provider struct {
 	bucket     string
 	prefix     string
 	client     s3iface.S3API
 	downloader s3manageriface.DownloaderAPI
-	cache      *awsS3Cache
+	cache      *s3Cache
 }
 
-var _ Provider = &awsS3Provider{}
+var _ Provider = &s3Provider{}
 
-func newAWSS3Provider(jwt JWT) (provider *awsS3Provider, err error) {
+func newS3Provider(jwt S3Bucket) (provider *s3Provider, err error) {
 	client, downloader, err := initClientAndDownloader(jwt.AWSAccessKeyID, jwt.AWSSecretAccessKey, jwt.Region)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func newAWSS3Provider(jwt JWT) (provider *awsS3Provider, err error) {
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	return &awsS3Provider{
+	return &s3Provider{
 		bucket:     jwt.Bucket,
 		prefix:     prefix,
 		client:     client,
@@ -71,7 +71,7 @@ func initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region string) 
 	return s3.New(sess), s3manager.NewDownloader(sess), nil
 }
 
-func (provider *awsS3Provider) initCache() (err error) {
+func (provider *s3Provider) initCache() (err error) {
 	res, err := provider.client.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String(provider.bucket),
 		Prefix: aws.String(provider.prefix),
@@ -79,7 +79,7 @@ func (provider *awsS3Provider) initCache() (err error) {
 	if err != nil {
 		return err
 	}
-	provider.cache = &awsS3Cache{
+	provider.cache = &s3Cache{
 		emails: make(map[int]*Email),
 	}
 	for index, item := range res.Contents {
@@ -91,7 +91,7 @@ func (provider *awsS3Provider) initCache() (err error) {
 	return nil
 }
 
-func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*Email, err error) {
+func (provider *s3Provider) ListEmails(notNumbers []int) (emails map[int]*Email, err error) {
 	if provider.cache == nil {
 		err := provider.initCache()
 		if err != nil {
@@ -114,7 +114,7 @@ func (provider *awsS3Provider) ListEmails(notNumbers []int) (emails map[int]*Ema
 	return emails, nil
 }
 
-func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *Email, err error) {
+func (provider *s3Provider) GetEmail(number int, notNumbers []int) (email *Email, err error) {
 	emails, err := provider.ListEmails(notNumbers)
 	if err != nil {
 		return nil, err
@@ -125,12 +125,12 @@ func (provider *awsS3Provider) GetEmail(number int, notNumbers []int) (email *Em
 	return nil, fmt.Errorf("%v does not exist", number)
 }
 
-func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error) {
+func (provider *s3Provider) GetEmailPayload(number int, notNumbers []int) (payload EmailPayload, err error) {
 	email, err := provider.GetEmail(number, notNumbers)
 	if err != nil {
 		return nil, err
 	}
-	if email.payloadOptional == nil {
+	if email.Payload == nil {
 		buf := aws.NewWriteAtBuffer([]byte{})
 		_, err = provider.downloader.Download(buf, &s3.GetObjectInput{
 			Bucket: aws.String(provider.bucket),
@@ -141,12 +141,12 @@ func (provider *awsS3Provider) GetEmailPayload(number int, notNumbers []int) (pa
 		}
 		var payload EmailPayload
 		payload = buf.Bytes()
-		email.payloadOptional = &payload
+		email.Payload = &payload
 	}
-	return *email.payloadOptional, nil
+	return *email.Payload, nil
 }
 
-func (provider *awsS3Provider) DeleteEmail(number int) (err error) {
+func (provider *s3Provider) DeleteEmail(number int) (err error) {
 	email, err := provider.GetEmail(number, nil)
 	if err != nil {
 		return err

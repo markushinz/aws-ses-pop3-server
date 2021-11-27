@@ -17,10 +17,10 @@
 package provider
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/golang-jwt/jwt"
 )
 
 type ProviderCreator func(user, password string) (Provider, error)
@@ -32,7 +32,7 @@ type Provider interface {
 	DeleteEmail(number int) (err error)
 }
 
-type JWT struct {
+type S3Bucket struct {
 	AWSAccessKeyID     string `json:"awsAccessKeyID,omitempty"`
 	AWSSecretAccessKey string `json:"awsSecretAccessKey,omitempty"`
 	Region             string `json:"region,omitempty"`
@@ -40,35 +40,55 @@ type JWT struct {
 	Prefix             string `json:"prefix,omitempty"`
 }
 
-type Legacy struct {
-	User                string
-	Password            string
-	AuthorizationLambda string
-	JWT                 *JWT
+type JWTClaims struct {
+	jwt.StandardClaims
+	Provider string `json:"provider,omitempty"`
+	S3Bucket
 }
 
-func NewProviderCreator(jwtSecret string, legacy Legacy) ProviderCreator {
+type StaticCredentials struct {
+	User     string
+	Password string
+	S3Bucket *S3Bucket
+}
+
+func NewStaticCredentialsProviderCreator(staticCreds StaticCredentials) ProviderCreator {
 	return func(user, password string) (Provider, error) {
-		switch {
-		case legacy.AuthorizationLambda != "":
-			return CheckAuthorization(user, password, legacy.AuthorizationLambda, legacy.JWT)
-		case user == legacy.User && password == legacy.Password:
-			if legacy.JWT != nil {
-				return newAWSS3Provider(*legacy.JWT)
+		if user == staticCreds.User && password == staticCreds.Password {
+			if staticCreds.S3Bucket != nil {
+				return newS3Provider(*staticCreds.S3Bucket)
 			}
 			return newNoneProvider()
-		case strings.EqualFold(user, "jwt"):
-			token, err := jwt.ParseSigned(password)
-			if err != nil {
-				return nil, err
-			}
-			decoded := JWT{}
-			if err := token.Claims([]byte(jwtSecret), &decoded); err != nil {
-				return nil, err
-			}
-			return newAWSS3Provider(decoded)
-		default:
-			return nil, fmt.Errorf("Credentials do not match user/password nor are a jwt")
 		}
+		return nil, errors.New("credentials do not match user/password")
+	}
+}
+
+func NewJWTProviderCreator(jwtSecret string) ProviderCreator {
+	return func(user, password string) (Provider, error) {
+		if strings.EqualFold(user, "jwt") {
+			claims := JWTClaims{}
+			if _, err := jwt.ParseWithClaims(password, &claims, func(token *jwt.Token) (interface{}, error) {
+				return []byte(jwtSecret), nil
+			}); err != nil {
+				return nil, err
+			}
+			switch true {
+			case strings.EqualFold(claims.Provider, "none"):
+				return newNoneProvider()
+			case strings.EqualFold(claims.Provider, "demo"):
+				return newNoneProvider(DemoEmail)
+			case claims.Provider == "" || strings.EqualFold(claims.Provider, "s3"):
+				return newS3Provider(S3Bucket{
+					AWSAccessKeyID:     claims.AWSAccessKeyID,
+					AWSSecretAccessKey: claims.AWSSecretAccessKey,
+					Region:             claims.Region,
+					Bucket:             claims.Bucket,
+					Prefix:             claims.Prefix,
+				})
+			}
+			return nil, errors.New("provider must be either be '', 'none', 'demo' or 's3'")
+		}
+		return nil, errors.New("user is != 'jwt'")
 	}
 }
