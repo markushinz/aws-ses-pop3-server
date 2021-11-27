@@ -64,6 +64,17 @@ func NewStaticCredentialsProviderCreator(staticCreds StaticCredentials) Provider
 	}
 }
 
+func NewLambdaAuthorizationProviderCreator(authorizationLambda string, s3Bucket S3Bucket) ProviderCreator {
+	return func(user, password string) (Provider, error) {
+		authorizedBucket, err := CheckAuthorization(user, password, authorizationLambda, &s3Bucket)
+		if err != nil {
+			return nil, err
+		}
+
+		return newS3Provider(*authorizedBucket)
+	}
+}
+
 func NewJWTProviderCreator(jwtSecret string) ProviderCreator {
 	return func(user, password string) (Provider, error) {
 		if strings.EqualFold(user, "jwt") {

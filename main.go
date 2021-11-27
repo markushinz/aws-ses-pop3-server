@@ -56,11 +56,11 @@ func initProviderCreator() provider.ProviderCreator {
 		)
 	}
 
-	if !viper.IsSet("user") {
+	if !viper.IsSet("user") && !viper.IsSet("authorization-lambda") {
 		log.Print("Warning: No user specified. \"user\" will be used")
 	}
 	viper.SetDefault("user", "user")
-	if !viper.IsSet("password") {
+	if !viper.IsSet("password") && !viper.IsSet("authorization-lambda") {
 		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
 	}
 	viper.SetDefault("password", "changeit")
@@ -83,6 +83,14 @@ func initProviderCreator() provider.ProviderCreator {
 			Bucket:             viper.GetString("aws-s3-bucket"),
 			Prefix:             viper.GetString("aws-s3-prefix"),
 		}
+	}
+
+	if viper.IsSet("authorization-lambda") {
+		if !viper.IsSet("aws-access-key-id") || !viper.IsSet("aws-secret-access-key") || !viper.IsSet("aws-s3-region") {
+			log.Fatal("Fatal error initProviderCreator: authorization-lambda requires aws-access-key-id, aws-secret-access-key and aws-s3-region")
+		}
+
+		return provider.NewLambdaAuthorizationProviderCreator(viper.GetString("authorization-lambda"), *staticCreds.S3Bucket)
 	}
 
 	return provider.NewStaticCredentialsProviderCreator(staticCreds)
