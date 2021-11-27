@@ -147,6 +147,7 @@ func (handler *pop3Handler) handlePASS(message string) (responses []string) {
 	password := strings.TrimPrefix(message, "PASS ")
 	provider, err := handler.providerCreator(*handler.cache.user, password)
 	if err != nil {
+		log.Printf("Error handlePASS(): %v", err)
 		return []string{"-ERR"}
 	}
 	handler.cache.provider = provider
