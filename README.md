@@ -31,7 +31,7 @@ First, follow the official tutorial [Receiving Email with Amazon SES](https://do
 
 Next, create an IAM user that has read and write permissions to the desired S3 bucket.
 
-[Create a config file](#config) using one of suppurted authentication/authorization ways (listed below) and start the server.
+[Create a config file](#config) using one of the supported authentication/authorization ways (listed below) and start the server.
 
 > Restrict access to your local machine or use TLS!
 
@@ -56,6 +56,7 @@ In order to use JWTs provide a JWT secret via the config and provide `jwt` as us
     "prefix": ""
 }
 ```
+> This does not work with Gmail! Gmail enforces a maximum character length for POP3 credentials that is smaller than the expected length of JWTs.
 
 ### 2) HTTP(S) basic auth
 
