@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/markushinz/aws-ses-pop3-server/pkg/handler"
 	"github.com/markushinz/aws-ses-pop3-server/pkg/provider"
@@ -54,6 +55,13 @@ func initProviderCreator(v *viper.Viper) provider.ProviderCreator {
 	if v.IsSet("jwt-secret") {
 		return provider.NewJWTProviderCreator(
 			v.GetString("jwt-secret"),
+		)
+	}
+
+	if v.IsSet("http-basic-auth-url") {
+		return provider.NewHTTPBasicAuthProviderCreator(
+			10*time.Second,
+			v.GetString("http-basic-auth-url"),
 		)
 	}
 
