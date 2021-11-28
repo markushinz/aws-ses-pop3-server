@@ -201,7 +201,8 @@ func TestE2E(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			viper.SetConfigType("yaml")
+			v := viper.New()
+			v.SetConfigType("yaml")
 			tt.config["host"] = host
 			tt.config["port"] = port
 			tt.config["verbose"] = verbose
@@ -209,11 +210,10 @@ func TestE2E(t *testing.T) {
 			for key, value := range tt.config {
 				yaml += fmt.Sprintf("%s: %s\n", key, value)
 			}
-			require.NoError(t, viper.ReadConfig(strings.NewReader(yaml)))
-			defer viper.Reset()
-			providerCreator := initProviderCreator()
-			handlerCreator := initHandlerCreator(providerCreator)
-			serverCreator := initServerCreator(handlerCreator)
+			require.NoError(t, v.ReadConfig(strings.NewReader(yaml)))
+			providerCreator := initProviderCreator(v)
+			handlerCreator := initHandlerCreator(v, providerCreator)
+			serverCreator := initServerCreator(v, handlerCreator)
 			server := serverCreator()
 			go server.Listen()
 			defer func() {

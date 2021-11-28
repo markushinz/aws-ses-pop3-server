@@ -29,101 +29,102 @@ import (
 )
 
 func main() {
-	viper.SetEnvPrefix("POP3")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/etc/aws-ses-pop3-server/")
-	viper.AddConfigPath("$HOME/.aws-ses-pop3-server")
-	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil {
+	v := viper.New()
+	v.SetEnvPrefix("POP3")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.AddConfigPath("/etc/aws-ses-pop3-server/")
+	v.AddConfigPath("$HOME/.aws-ses-pop3-server")
+	v.AddConfigPath(".")
+	if err := v.ReadInConfig(); err != nil {
 		if _, notFound := err.(viper.ConfigFileNotFoundError); !notFound {
 			log.Fatal(fmt.Sprintf("Fatal error loadConfig(): %v", err))
 		}
 	}
-	providerCreator := initProviderCreator()
-	handlerCreator := initHandlerCreator(providerCreator)
-	serverCreator := initServerCreator(handlerCreator)
+	providerCreator := initProviderCreator(v)
+	handlerCreator := initHandlerCreator(v, providerCreator)
+	serverCreator := initServerCreator(v, handlerCreator)
 	server := serverCreator()
 	server.Listen()
 }
 
-func initProviderCreator() provider.ProviderCreator {
-	if viper.IsSet("jwt-secret") {
+func initProviderCreator(v *viper.Viper) provider.ProviderCreator {
+	if v.IsSet("jwt-secret") {
 		return provider.NewJWTProviderCreator(
-			viper.GetString("jwt-secret"),
+			v.GetString("jwt-secret"),
 		)
 	}
 
-	if !viper.IsSet("user") {
+	if !v.IsSet("user") {
 		log.Print("Warning: No user specified. \"user\" will be used")
 	}
-	viper.SetDefault("user", "user")
-	if !viper.IsSet("password") {
+	v.SetDefault("user", "user")
+	if !v.IsSet("password") {
 		log.Print("Warning: No password specified. \"changeit\" will be used. DO NOT USE IN PRODUCTION!")
 	}
-	viper.SetDefault("password", "changeit")
+	v.SetDefault("password", "changeit")
 	staticCreds := provider.StaticCredentials{
-		User:     viper.GetString("user"),
-		Password: viper.GetString("password"),
+		User:     v.GetString("user"),
+		Password: v.GetString("password"),
 	}
-	if viper.IsSet("aws-access-key-id") && viper.IsSet("aws-secret-access-key") {
-		viper.SetDefault("aws-s3-prefix", "")
-		if !viper.IsSet("aws-s3-region") {
+	if v.IsSet("aws-access-key-id") && v.IsSet("aws-secret-access-key") {
+		v.SetDefault("aws-s3-prefix", "")
+		if !v.IsSet("aws-s3-region") {
 			log.Fatal("Fatal error initProviderCreator(): No aws-s3-region specified")
 		}
-		if !viper.IsSet("aws-s3-bucket") {
+		if !v.IsSet("aws-s3-bucket") {
 			log.Fatal("Fatal error initProviderCreator(): No aws-s3-bucket specified")
 		}
 		staticCreds.S3Bucket = &provider.S3Bucket{
-			AWSAccessKeyID:     viper.GetString("aws-access-key-id"),
-			AWSSecretAccessKey: viper.GetString("aws-secret-access-key"),
-			Region:             viper.GetString("aws-s3-region"),
-			Bucket:             viper.GetString("aws-s3-bucket"),
-			Prefix:             viper.GetString("aws-s3-prefix"),
+			AWSAccessKeyID:     v.GetString("aws-access-key-id"),
+			AWSSecretAccessKey: v.GetString("aws-secret-access-key"),
+			Region:             v.GetString("aws-s3-region"),
+			Bucket:             v.GetString("aws-s3-bucket"),
+			Prefix:             v.GetString("aws-s3-prefix"),
 		}
 	}
 
 	return provider.NewStaticCredentialsProviderCreator(staticCreds)
 }
 
-func initHandlerCreator(providerCreator provider.ProviderCreator) handler.HandlerCreator {
-	viper.SetDefault("verbose", false)
+func initHandlerCreator(v *viper.Viper, providerCreator provider.ProviderCreator) handler.HandlerCreator {
+	v.SetDefault("verbose", false)
 	return handler.NewPOP3HandlerCreator(
 		providerCreator,
-		viper.GetBool("verbose"),
+		v.GetBool("verbose"),
 	)
 }
 
-func initServerCreator(handlerCreator handler.HandlerCreator) server.ServerCreator {
+func initServerCreator(v *viper.Viper, handlerCreator handler.HandlerCreator) server.ServerCreator {
 	var certificate tls.Certificate
 	var err error
-	if viper.IsSet("tls-cert") && viper.IsSet("tls-key") {
+	if v.IsSet("tls-cert") && v.IsSet("tls-key") {
 		certificate, err = tls.X509KeyPair(
-			[]byte(viper.GetString("tls-cert")),
-			[]byte(viper.GetString("tls-key")),
+			[]byte(v.GetString("tls-cert")),
+			[]byte(v.GetString("tls-key")),
 		)
-	} else if viper.IsSet("tls-cert-path") && viper.IsSet("tls-key-path") {
+	} else if v.IsSet("tls-cert-path") && v.IsSet("tls-key-path") {
 		certificate, err = tls.LoadX509KeyPair(
-			viper.GetString("tls-cert-path"),
-			viper.GetString("tls-key-path"),
+			v.GetString("tls-cert-path"),
+			v.GetString("tls-key-path"),
 		)
 	} else {
 		log.Print("Warning: No tls-cert / tls-key or tls-cert-path / tls-cert-key specified. TLS will be disabled. DO NOT USE IN PRODUCTION!")
-		viper.SetDefault("port", 2110)
+		v.SetDefault("port", 2110)
 		return server.NewTCPServerCreator(handlerCreator,
-			viper.GetString("host"),
-			viper.GetInt("port"),
+			v.GetString("host"),
+			v.GetInt("port"),
 		)
 	}
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Fatal error loadServerCreator(): %v", err))
 	}
-	viper.SetDefault("port", 2995)
+	v.SetDefault("port", 2995)
 	return server.NewTCPTLSServerCreator(handlerCreator,
-		viper.GetString("host"),
-		viper.GetInt("port"),
+		v.GetString("host"),
+		v.GetInt("port"),
 		certificate,
 	)
 }
