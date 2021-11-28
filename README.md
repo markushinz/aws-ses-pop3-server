@@ -42,10 +42,10 @@ Follow the official tutorial [Using the Amazon SES SMTP Interface to Send Email]
 ### 1) JSON Web Tokens (JWTs)
 
 Provide all required information the server needs to access an S3 bucket via a JWT.
-To make sure a malicious user cannot make the server try to authenticate against AWS using arbitary credentials the server checks the signature and the `exp` property of JWTs.
+To ensure that a malicious user cannot trick the server into authenticating against AWS with arbitrary credentials, the server checks the signature and the `exp` property of JWTs.
 If `exp` is not specified tokens do not expire.
 
-In order to use JWTs provide a JWT secret via the config and provide `jwt` as user and the a signed JWT with the following contents as password:
+To use JWTs, provide a JWT secret via the config and provide `jwt` as user and the a signed JWT with the following content as password:
 
 ```json
 {
@@ -60,8 +60,8 @@ In order to use JWTs provide a JWT secret via the config and provide `jwt` as us
 
 ### 2) HTTP(S) basic auth
 
-Make an upstream GET request to retrieve all required information the server needs to access an S3 bucket.
-The GET request carries user and password via basic auth and expects the response to have status code 200 and a JSON body that follows the same format as the JWT contents (see above).
+Perform a GET request to retrieve all required information the server needs to access an S3 bucket.
+The GET request transmits user and password via basic auth and expects the response to have status code 200 and a JSON body that follows the same format as the JWT content (see above).
 
 ### 3) Static credentials
 
