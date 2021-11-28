@@ -17,6 +17,8 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -33,10 +35,13 @@ const (
 	verbose = "true"
 )
 
+type setupFunc func(t *testing.T, v *viper.Viper) (teardown func())
+
 func TestE2E(t *testing.T) {
 	tests := []struct {
 		name   string
 		config map[string]string
+		setup  setupFunc
 		run    func(t *testing.T, connection net.Conn)
 	}{
 		{
@@ -158,25 +163,6 @@ func TestE2E(t *testing.T) {
 			},
 		},
 		{
-			name: "JWT invalid",
-			config: map[string]string{
-				"jwt-secret": "secret",
-			},
-			run: func(t *testing.T, connection net.Conn) {
-				read(t, connection, "+OK")
-
-				write(t, connection, "USER jwt")
-				read(t, connection, "+OK")
-
-				token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, provider.JWTClaims{
-					Provider: "demo",
-				}).SignedString([]byte("invalid"))
-				assert.NoError(t, err)
-				write(t, connection, "PASS "+token)
-				read(t, connection, "-ERR")
-			},
-		},
-		{
 			name: "JWT unknown provider",
 			config: map[string]string{
 				"jwt-secret": "secret",
@@ -198,10 +184,73 @@ func TestE2E(t *testing.T) {
 				read(t, connection, "-ERR")
 			},
 		},
+		{
+			name: "JWT invalid signature",
+			config: map[string]string{
+				"jwt-secret": "secret",
+			},
+			run: func(t *testing.T, connection net.Conn) {
+				read(t, connection, "+OK")
+
+				write(t, connection, "USER jwt")
+				read(t, connection, "+OK")
+
+				token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, provider.JWTClaims{
+					Provider: "none",
+				}).SignedString([]byte("invalid"))
+				assert.NoError(t, err)
+				write(t, connection, "PASS "+token)
+				read(t, connection, "-ERR")
+			},
+		},
+		{
+			name: "JWT invalid token",
+			config: map[string]string{
+				"jwt-secret": "secret",
+			},
+			run: func(t *testing.T, connection net.Conn) {
+				read(t, connection, "+OK")
+
+				write(t, connection, "USER jwt")
+				read(t, connection, "+OK")
+
+				write(t, connection, "PASS in.va.lid")
+				read(t, connection, "-ERR")
+			},
+		},
+		{
+			name:   "HTTP Basic Auth OK",
+			setup:  newHttpBasicAuthServer("user", "password"),
+			config: map[string]string{},
+			run: func(t *testing.T, connection net.Conn) {
+				read(t, connection, "+OK")
+
+				write(t, connection, "USER user")
+				read(t, connection, "+OK")
+
+				write(t, connection, "PASS password")
+				read(t, connection, "+OK")
+			},
+		},
+		{
+			name:   "HTTP Basic Auth Unauthorized",
+			setup:  newHttpBasicAuthServer("user", "password"),
+			config: map[string]string{},
+			run: func(t *testing.T, connection net.Conn) {
+				read(t, connection, "+OK")
+
+				write(t, connection, "USER user")
+				read(t, connection, "+OK")
+
+				write(t, connection, "PASS invalid")
+				read(t, connection, "-ERR")
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			viper.SetConfigType("yaml")
+			v := viper.New()
+			v.SetConfigType("yaml")
 			tt.config["host"] = host
 			tt.config["port"] = port
 			tt.config["verbose"] = verbose
@@ -209,11 +258,14 @@ func TestE2E(t *testing.T) {
 			for key, value := range tt.config {
 				yaml += fmt.Sprintf("%s: %s\n", key, value)
 			}
-			require.NoError(t, viper.ReadConfig(strings.NewReader(yaml)))
-			defer viper.Reset()
-			providerCreator := initProviderCreator()
-			handlerCreator := initHandlerCreator(providerCreator)
-			serverCreator := initServerCreator(handlerCreator)
+			require.NoError(t, v.ReadConfig(strings.NewReader(yaml)))
+			if tt.setup != nil {
+				teardown := tt.setup(t, v)
+				defer teardown()
+			}
+			providerCreator := initProviderCreator(v)
+			handlerCreator := initHandlerCreator(v, providerCreator)
+			serverCreator := initServerCreator(v, handlerCreator)
 			server := serverCreator()
 			go server.Listen()
 			defer func() {
@@ -239,4 +291,21 @@ func read(t *testing.T, connection net.Conn, wants ...string) {
 func write(t *testing.T, connection net.Conn, data string) {
 	_, err := connection.Write([]byte(data + "\r\n"))
 	require.NoError(t, err)
+}
+
+func newHttpBasicAuthServer(user, password string) setupFunc {
+	return func(t *testing.T, v *viper.Viper) (teardown func()) {
+		server := httptest.NewServer(
+			http.HandlerFunc(
+				func(w http.ResponseWriter, req *http.Request) {
+					if u, p, ok := req.BasicAuth(); ok && u == user && p == password {
+						w.Write([]byte("{}"))
+					}
+					w.WriteHeader(http.StatusUnauthorized)
+				}))
+		v.Set("http-basic-auth-url", server.URL)
+		return func() {
+			server.Close()
+		}
+	}
 }

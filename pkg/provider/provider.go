@@ -17,8 +17,12 @@
 package provider
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -90,5 +94,31 @@ func NewJWTProviderCreator(jwtSecret string) ProviderCreator {
 			return nil, errors.New("provider must be either be '', 'none', 'demo' or 's3'")
 		}
 		return nil, errors.New("user is != 'jwt'")
+	}
+}
+
+func NewHTTPBasicAuthProviderCreator(timeout time.Duration, url string) ProviderCreator {
+	client := &http.Client{
+		Timeout: timeout,
+	}
+	return func(user, password string) (Provider, error) {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.SetBasicAuth(user, password)
+		res, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		if res.StatusCode != 200 {
+			return nil, fmt.Errorf("received status code %v", res.StatusCode)
+		}
+		var bucket S3Bucket
+		if err := json.NewDecoder(res.Body).Decode(&bucket); err != nil {
+			return nil, err
+		}
+		return newS3Provider(bucket)
 	}
 }

@@ -43,17 +43,17 @@ type s3Provider struct {
 
 var _ Provider = &s3Provider{}
 
-func newS3Provider(jwt S3Bucket) (provider *s3Provider, err error) {
-	client, downloader, err := initClientAndDownloader(jwt.AWSAccessKeyID, jwt.AWSSecretAccessKey, jwt.Region)
+func newS3Provider(bucket S3Bucket) (provider *s3Provider, err error) {
+	client, downloader, err := initClientAndDownloader(bucket.AWSAccessKeyID, bucket.AWSSecretAccessKey, bucket.Region)
 	if err != nil {
 		return nil, err
 	}
-	prefix := jwt.Prefix
+	prefix := bucket.Prefix
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 	return &s3Provider{
-		bucket:     jwt.Bucket,
+		bucket:     bucket.Bucket,
 		prefix:     prefix,
 		client:     client,
 		downloader: downloader,
