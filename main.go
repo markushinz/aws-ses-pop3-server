@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -59,9 +60,24 @@ func initProviderCreator(v *viper.Viper) provider.ProviderCreator {
 	}
 
 	if v.IsSet("http-basic-auth-url") {
+		rawURL := v.GetString("http-basic-auth-url")
+		parsedURL, err := url.Parse(rawURL)
+		if err != nil {
+			log.Fatal("Fatal error initProviderCreator(): Cannot parse http-basic-auth-url")
+		}
+
+		v.SetDefault("http-basic-auth-url-insecure", false)
+		if !(parsedURL.Scheme == "https" ||
+			parsedURL.Hostname() == "localhost" ||
+			parsedURL.Hostname() == "127.0.0.1" ||
+			parsedURL.Hostname() == "[::1]" ||
+			v.GetBool("http-basic-auth-url-insecure")) {
+			log.Fatal("Fatal error initProviderCreator(): http-basic-auth-url uses the insecure http protocol")
+		}
+
 		return provider.NewHTTPBasicAuthProviderCreator(
 			10*time.Second,
-			v.GetString("http-basic-auth-url"),
+			rawURL,
 		)
 	}
 
