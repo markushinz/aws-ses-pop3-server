@@ -110,6 +110,7 @@ jwt-secret: "k2ya2iTNRdlsixVuTi00" # optional
 
 # HTTP BASIC AUTH SETTINGS (only effictive if jwt-secret is not set)
 http-basic-auth-url: "http://localhost" # optional
+http-basic-auth-url-insecure: false # optional, defaults to false. If set to true non-localhost URLs using the insecure http protocol will not be rejected
 
 
 
