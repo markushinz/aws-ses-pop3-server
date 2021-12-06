@@ -1,4 +1,4 @@
-FROM golang:1.17.3 as builder
+FROM golang:1.17.4 as builder
 ENV GO111MODULE=on
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
