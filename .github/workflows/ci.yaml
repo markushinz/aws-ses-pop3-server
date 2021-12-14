@@ -24,7 +24,7 @@ jobs:
 
           export GO111MODULE=on
           go mod download
-          go mod tidy -compat=1.17
+          go mod tidy
           git diff --exit-code
 
           go install github.com/ory/go-acc@latest
