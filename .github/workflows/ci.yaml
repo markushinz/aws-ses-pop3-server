@@ -61,7 +61,7 @@ jobs:
             ${{ github.repository }}:v${{ env.VERSION }}
       - name: Release
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh release create "v${VERSION}" --title "v${VERSION}" --notes "v${VERSION}" ./aws-ses-pop3-server-x86_64-Linux ./aws-ses-pop3-server-x86_64-Darwin ./aws-ses-pop3-server-arm64-Darwin
+        run: GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh release create "v${VERSION}" --generate-notes ./aws-ses-pop3-server-x86_64-Linux ./aws-ses-pop3-server-x86_64-Darwin ./aws-ses-pop3-server-arm64-Darwin
       - name: Deploy
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh workflow run -R "${{ secrets.DEPLOY_REPO }}" cd.yaml -f "repository=${{ github.repository }}" -f "tag=v${VERSION}" -f "merge=true"
