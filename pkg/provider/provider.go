@@ -69,31 +69,28 @@ func NewStaticCredentialsProviderCreator(staticCreds StaticCredentials) Provider
 }
 
 func NewJWTProviderCreator(jwtSecret string) ProviderCreator {
-	return func(user, password string) (Provider, error) {
-		if strings.EqualFold(user, "jwt") {
-			claims := JWTClaims{}
-			if _, err := jwt.ParseWithClaims(password, &claims, func(token *jwt.Token) (interface{}, error) {
-				return []byte(jwtSecret), nil
-			}); err != nil {
-				return nil, err
-			}
-			switch true {
-			case strings.EqualFold(claims.Provider, "none"):
-				return newNoneProvider()
-			case strings.EqualFold(claims.Provider, "demo"):
-				return newNoneProvider(DemoEmail)
-			case claims.Provider == "" || strings.EqualFold(claims.Provider, "s3"):
-				return newS3Provider(S3Bucket{
-					AWSAccessKeyID:     claims.AWSAccessKeyID,
-					AWSSecretAccessKey: claims.AWSSecretAccessKey,
-					Region:             claims.Region,
-					Bucket:             claims.Bucket,
-					Prefix:             claims.Prefix,
-				})
-			}
-			return nil, errors.New("provider must be either be '', 'none', 'demo' or 's3'")
+	return func(_, password string) (Provider, error) {
+		claims := JWTClaims{}
+		if _, err := jwt.ParseWithClaims(password, &claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		}); err != nil {
+			return nil, err
 		}
-		return nil, errors.New("user is != 'jwt'")
+		switch true {
+		case strings.EqualFold(claims.Provider, "none"):
+			return newNoneProvider()
+		case strings.EqualFold(claims.Provider, "demo"):
+			return newNoneProvider(DemoEmail)
+		case claims.Provider == "" || strings.EqualFold(claims.Provider, "s3"):
+			return newS3Provider(S3Bucket{
+				AWSAccessKeyID:     claims.AWSAccessKeyID,
+				AWSSecretAccessKey: claims.AWSSecretAccessKey,
+				Region:             claims.Region,
+				Bucket:             claims.Bucket,
+				Prefix:             claims.Prefix,
+			})
+		}
+		return nil, errors.New("provider must be either be '', 'none', 'demo' or 's3'")
 	}
 }
 
