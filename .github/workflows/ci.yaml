@@ -11,17 +11,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: pre-commit
+        uses: markushinz/actions/pre-commit@v1.0.1
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: "1.18"
-      - name: Version, Test and Build
+      - name: Test and Build
         run: |
-          export VERSION=$(./version.sh)
-          echo "VERSION=${VERSION}" >> ${GITHUB_ENV}
-
           export GO111MODULE=on
           go mod download
           go mod tidy
@@ -46,6 +43,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Workflow Mutex
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: markushinz/actions/workflow-mutex@v1.0.1
+      - name: Version
+        uses: markushinz/actions/version@v1.0.1
+        with:
+          minimum_version_command: cat version.txt
       - name: Docker - Build and Push
         uses: docker/build-push-action@v3
         with:
