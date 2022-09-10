@@ -1,5 +1,5 @@
 /*
-   Copyright 2021 Markus Hinz
+   Copyright 2022 Markus Hinz
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -300,8 +300,9 @@ func newHttpBasicAuthServer(user, password string) setupFunc {
 				func(w http.ResponseWriter, req *http.Request) {
 					if u, p, ok := req.BasicAuth(); ok && u == user && p == password {
 						w.Write([]byte("{}"))
+					} else {
+						w.WriteHeader(http.StatusUnauthorized)
 					}
-					w.WriteHeader(http.StatusUnauthorized)
 				}))
 		v.Set("http-basic-auth-url", server.URL)
 		return func() {
