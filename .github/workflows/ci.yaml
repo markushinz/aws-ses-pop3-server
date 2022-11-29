@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: pre-commit
-        uses: markushinz/actions/pre-commit@v1.0.12
+        uses: markushinz/actions/pre-commit@v1.0.13
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -45,9 +45,9 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Workflow Mutex
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: markushinz/actions/workflow-mutex@v1.0.12
+        uses: markushinz/actions/workflow-mutex@v1.0.13
       - name: Version
-        uses: markushinz/actions/version@v1.0.12
+        uses: markushinz/actions/version@v1.0.13
         with:
           minimum_version_command: cat version.txt
       - name: Docker - Build and Push
