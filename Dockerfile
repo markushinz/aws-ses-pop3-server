@@ -1,4 +1,7 @@
-FROM golang:1.19.4 as builder
+FROM --platform=$BUILDPLATFORM golang:1.19.4 as builder
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ENV GO111MODULE=on
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
@@ -8,7 +11,7 @@ COPY main.go .
 COPY e2e_test.go .
 COPY pkg ./pkg
 RUN go test -race -v ./...
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
+RUN export GOARCH=$(echo $TARGETPLATFORM | cut -d/ -f2) ; CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/aws-ses-pop3-server
 FROM alpine:3.17.0 as runner
 COPY --from=builder /usr/local/bin/aws-ses-pop3-server /usr/local/bin/aws-ses-pop3-server
 RUN addgroup --gid 1767 appgroup && \
