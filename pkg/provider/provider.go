@@ -39,6 +39,7 @@ type Provider interface {
 type S3Bucket struct {
 	AWSAccessKeyID     string `json:"awsAccessKeyID,omitempty"`
 	AWSSecretAccessKey string `json:"awsSecretAccessKey,omitempty"`
+	AWSSessionToken    string `json:"awsSessionToken,omitempty"`
 	Region             string `json:"region,omitempty"`
 	Bucket             string `json:"bucket,omitempty"`
 	Prefix             string `json:"prefix,omitempty"`
@@ -85,6 +86,7 @@ func NewJWTProviderCreator(jwtSecret string) ProviderCreator {
 			return newS3Provider(S3Bucket{
 				AWSAccessKeyID:     claims.AWSAccessKeyID,
 				AWSSecretAccessKey: claims.AWSSecretAccessKey,
+				AWSSessionToken:    claims.AWSSessionToken,
 				Region:             claims.Region,
 				Bucket:             claims.Bucket,
 				Prefix:             claims.Prefix,

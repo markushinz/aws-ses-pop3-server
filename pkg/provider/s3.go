@@ -44,7 +44,7 @@ type s3Provider struct {
 var _ Provider = &s3Provider{}
 
 func newS3Provider(bucket S3Bucket) (provider *s3Provider, err error) {
-	client, downloader, err := initClientAndDownloader(bucket.AWSAccessKeyID, bucket.AWSSecretAccessKey, bucket.Region)
+	client, downloader, err := initClientAndDownloader(bucket.AWSAccessKeyID, bucket.AWSSecretAccessKey, bucket.AWSSessionToken, bucket.Region)
 	if err != nil {
 		return nil, err
 	}
@@ -60,10 +60,10 @@ func newS3Provider(bucket S3Bucket) (provider *s3Provider, err error) {
 	}, nil
 }
 
-func initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, region string) (client *s3.S3, downloader *s3manager.Downloader, err error) {
+func initClientAndDownloader(awsAccessKeyID, awsSecretAccessKey, awsSessionToken, region string) (client *s3.S3, downloader *s3manager.Downloader, err error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(region),
-		Credentials: credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, ""),
+		Credentials: credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, awsSessionToken),
 	})
 	if err != nil {
 		return nil, nil, err

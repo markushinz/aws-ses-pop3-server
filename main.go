@@ -95,6 +95,7 @@ func initProviderCreator(v *viper.Viper) provider.ProviderCreator {
 	}
 	if v.IsSet("aws-access-key-id") && v.IsSet("aws-secret-access-key") {
 		v.SetDefault("aws-s3-prefix", "")
+		v.SetDefault("aws-session-token", "")
 		if !v.IsSet("aws-s3-region") {
 			log.Fatal("Fatal error initProviderCreator(): No aws-s3-region specified")
 		}
@@ -104,6 +105,7 @@ func initProviderCreator(v *viper.Viper) provider.ProviderCreator {
 		staticCreds.S3Bucket = &provider.S3Bucket{
 			AWSAccessKeyID:     v.GetString("aws-access-key-id"),
 			AWSSecretAccessKey: v.GetString("aws-secret-access-key"),
+			AWSSessionToken:    v.GetString("aws-session-token"),
 			Region:             v.GetString("aws-s3-region"),
 			Bucket:             v.GetString("aws-s3-bucket"),
 			Prefix:             v.GetString("aws-s3-prefix"),

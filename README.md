@@ -51,11 +51,15 @@ To use JWTs, provide a JWT secret via the config and provide `jwt` as user and t
 {
     "awsAccessKeyID": "AKIAIOSFODNN7EXAMPLE",
     "awsSecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "awsSessionToken": "...",
     "region": "eu-central-1",
     "bucket": "aws-ses-pop3-server",
     "prefix": ""
 }
 ```
+
+`awsSessionToken` is only used for STS (short-term) credentials.
+
 > This does not work with Gmail! Gmail enforces a maximum character length for POP3 credentials that is smaller than the expected length of JWTs.
 
 ### 2) HTTP(S) basic auth
@@ -120,9 +124,11 @@ password: "6xRkiWA4mZBSaNmv" # optional, defaults to "changeit". DO CHANGE IT!
 
 # The following aws-* keys are optional but required if you want to load emails
 # These values have to be set here and are not inferred from other envrionment variables or ~/.aws/credentials
+# aws-session-token is only used for STS-based keys
 # You need read and write permissions to the desired S3 bucket
 aws-access-key-id: "AKIAIOSFODNN7EXAMPLE"
 aws-secret-access-key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+aws-session-token: "..."
 
 # The following aws-s3-* keys are required iff you set aws-access-key-id and aws-secret-access-key
 aws-s3-region: "eu-central-1"
