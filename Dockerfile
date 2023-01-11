@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.19.4 as builder
+FROM --platform=$BUILDPLATFORM golang:1.19.5 as builder
 ARG TARGETPLATFORM
 ENV GO111MODULE=on
 WORKDIR /usr/src/aws-ses-pop3-server
