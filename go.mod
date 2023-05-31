@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.271
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/spf13/viper v1.16.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
