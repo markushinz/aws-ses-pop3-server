@@ -10,5 +10,5 @@ jobs:
     steps:
       - name: Merge
         run: |
-          number=$(GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh pr list --repo ${{ github.repository }} --limit 1 --author app/dependabot --json number --jq '.[0].number')
+          number=$(GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh pr list --repo ${{ github.repository }} --limit 1 --author app/renovate --json number --jq '.[0].number')
           [[ -n "${number}" ]] && GITHUB_TOKEN="${{ secrets.TU_TOKEN }}" gh pr merge --repo ${{ github.repository }} --auto --squash "${number}" || exit 0
