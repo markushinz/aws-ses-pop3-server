@@ -11,5 +11,6 @@
     ]
   },
   "bumpVersion": "patch",
-  "rebaseWhen": "behind-base-branch"
+  "rebaseWhen": "behind-base-branch",
+  "postUpdateOptions": ["gomodTidy"]
 }
