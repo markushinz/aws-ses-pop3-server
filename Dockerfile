@@ -1,6 +1,5 @@
 FROM --platform=$BUILDPLATFORM golang:1.21.4@sha256:81cd210ae58a6529d832af2892db822b30d84f817a671b8e1c15cff0b271a3db as builder
 ARG TARGETPLATFORM
-ENV GO111MODULE=on
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
 COPY go.sum .
