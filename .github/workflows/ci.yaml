@@ -8,6 +8,9 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -43,9 +46,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Workflow Mutex
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: markushinz/actions/workflow-mutex@v1.1.7
       - name: Version
         uses: markushinz/actions/version@v1.1.7
         with:

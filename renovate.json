@@ -9,5 +9,14 @@
       "\\.ya?ml$"
     ]
   },
-  "bumpVersion": "patch"
+  "bumpVersion": "patch",
+  "rebaseWhen": "behind-base-branch",
+  "packageRules": [
+    {
+      "matchCategories": [
+        "docker"
+      ],
+      "pinDigests": true
+    }
+  ]
 }
