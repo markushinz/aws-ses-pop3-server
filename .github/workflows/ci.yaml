@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: pre-commit
-        uses: markushinz/actions/pre-commit@v1.1.8
+        uses: markushinz/actions/pre-commit@v1.1.9
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -46,7 +46,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Version
-        uses: markushinz/actions/version@v1.1.8
+        uses: markushinz/actions/version@v1.1.9
         with:
           minimum_version_command: cat version.txt
       - name: Docker - Build and Push
