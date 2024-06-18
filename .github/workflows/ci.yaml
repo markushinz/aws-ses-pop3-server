@@ -50,7 +50,7 @@ jobs:
         with:
           minimum_version_command: cat version.txt
       - name: Docker - Build and Push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
