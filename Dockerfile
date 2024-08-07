@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.22.5@sha256:86a3c48a61915a8c62c0e1d7594730399caa3feb73655dfe96c7bc17710e96cf as builder
+FROM --platform=$BUILDPLATFORM golang:1.22.6@sha256:a24a0c791d1c7cc50538298c989b8f1347d60e2f2509b91ac5b08d52e15c052c as builder
 ARG TARGETPLATFORM
 WORKDIR /usr/src/aws-ses-pop3-server
 COPY go.mod .
