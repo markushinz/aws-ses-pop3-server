@@ -5,7 +5,7 @@ go 1.21.0
 toolchain go1.24.5
 
 require (
-	github.com/aws/aws-sdk-go v1.55.7
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
