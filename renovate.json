@@ -6,11 +6,13 @@
     "docker:pinDigests"
   ],
   "kubernetes": {
-    "fileMatch": [
-      "\\.ya?ml$"
+    "managerFilePatterns": [
+      "/\\.ya?ml$/"
     ]
   },
   "bumpVersion": "patch",
   "rebaseWhen": "behind-base-branch",
-  "postUpdateOptions": ["gomodTidy"]
+  "postUpdateOptions": [
+    "gomodTidy"
+  ]
 }
