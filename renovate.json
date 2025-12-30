@@ -3,13 +3,11 @@
   "extends": [
     ":dependencyDashboard",
     ":enablePreCommit",
-    "docker:pinDigests"
+    ":disableRateLimiting",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests"
   ],
-  "kubernetes": {
-    "managerFilePatterns": [
-      "/\\.ya?ml$/"
-    ]
-  },
+  "separateMultipleMajor": true,
   "bumpVersion": "patch",
   "rebaseWhen": "behind-base-branch",
   "postUpdateOptions": [
