@@ -5,7 +5,8 @@
     ":enablePreCommit",
     ":disableRateLimiting",
     "docker:pinDigests",
-    "helpers:pinGitHubActionDigests"
+    "helpers:pinGitHubActionDigests",
+    "group:all"
   ],
   "separateMultipleMajor": true,
   "bumpVersion": "patch",
