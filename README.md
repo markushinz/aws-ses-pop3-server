@@ -4,7 +4,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=markushinz_aws-ses-pop3-server&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=markushinz_aws-ses-pop3-server)
 
 The missing POP3 server for [Amazon Simple Email Service](https://aws.amazon.com/de/ses/) - written in golang.
-Tested with Apple Mail 16.0 on macOS 12.5.1, Apple Mail on iOS 15.6.1 and Microsoft Outlook for Mac 16.64.
+Tested with Apple Mail 16.0 on macOS 26.2, Apple Mail on iOS 26.2 and Microsoft Outlook for Mac 16.104.
 
 AWS SES is powerful when it comes to sending emails but has only limited functionality to receive them.
 Officially, only storing them in [Amazon S3](https://aws.amazon.com/de/s3/) and triggering [Amazon Lambda](https://aws.amazon.com/de/lambda/) functions is supported (in certain regions such as *eu-west-1*).
@@ -15,12 +15,10 @@ This implementation serves a fully compliant [RFC1939](https://tools.ietf.org/ht
 
 [`markushinz/aws-ses-pop3-server`](https://hub.docker.com/r/markushinz/aws-ses-pop3-server/tags)
 
-*Hint*: If you want to deploy aws-ses-pop3-server to Kubernetes check [this tutorial](https://minikube.sigs.k8s.io/docs/tutorials/nginx_tcp_udp_ingress/) on how to configure your NGINX Ingress Controller.
-
 ### Linux / macOS
 
 ```shell
-sudo curl -L "https://github.com/markushinz/aws-ses-pop3-server/releases/latest/download/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
+sudo curl -fsSL "https://github.com/markushinz/aws-ses-pop3-server/releases/latest/download/aws-ses-pop3-server-$(uname -m)-$(uname -s)" -o /usr/local/bin/aws-ses-pop3-server
 sudo chmod +x /usr/local/bin/aws-ses-pop3-server
 aws-ses-pop3-server
 ```
