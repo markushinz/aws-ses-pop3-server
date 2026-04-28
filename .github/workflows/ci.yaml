@@ -37,7 +37,7 @@ jobs:
           CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -o aws-ses-pop3-server-arm64-Darwin
       - name: SonarCloud Scan
         if: ${{ github.actor != 'markushinz-renovate[bot]' }}
-        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
+        uses: SonarSource/sonarqube-scan-action@55e44800a8f495208cce6e4e82f5dedb45fcf0ef # v7.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Docker - Set up Buildx
