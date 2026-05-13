@@ -2,7 +2,7 @@ module github.com/markushinz/aws-ses-pop3-server
 
 go 1.23.0
 
-toolchain go1.26.2
+toolchain go1.26.3
 
 require (
 	github.com/aws/aws-sdk-go v1.55.8
