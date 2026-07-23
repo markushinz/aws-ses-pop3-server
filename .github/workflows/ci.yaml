@@ -13,13 +13,13 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: pre-commit
         uses: markushinz/actions/pre-commit@329eadc6eef0b546774bdc12dd9e96d9f4ed98d1 # v1.1.12
       - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version: "1.26"
       - name: Test and Build
@@ -37,13 +37,13 @@ jobs:
           CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -o aws-ses-pop3-server-arm64-Darwin
       - name: SonarCloud Scan
         if: ${{ github.actor != 'markushinz-renovate[bot]' }}
-        uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Docker - Set up Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
       - name: Docker - Login
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
