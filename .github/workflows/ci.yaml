@@ -37,11 +37,11 @@ jobs:
           CGO_ENABLED=0 GOARCH=arm64 GOOS=darwin go build -o aws-ses-pop3-server-arm64-Darwin
       - name: SonarCloud Scan
         if: ${{ github.actor != 'markushinz-renovate[bot]' }}
-        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Docker - Set up Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Docker - Login
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
@@ -52,7 +52,7 @@ jobs:
         with:
           minimum_version_command: cat version.txt
       - name: Docker - Build and Push
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
